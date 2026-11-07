@@ -65,12 +65,19 @@ function cabinetParts(){
   {name:"Bovenblad",length:between?innerW:W,width:bodyD,count:1,thickness:T,edge:["front"],note:"Corpus"},
   
  ];
- if(S)parts.push({name:$("#c-shelf-type").value==="fixed"?"Vaste legplank":"Verstelbare legplank",length:shelfWidth,width:Math.max(1,bodyD-(backType==="inset18"?18:backType==="flush-rebate"?num("#c-rebate"):0)),count:S*bays,thickness:T,edge:["front"],note:"Legplankdiepte is verminderd voor achterwandruimte"});
- const bays=N+1,shelfWidth=(innerW-N*T)/bays;
- const backDepth=backType==="inset18"?18:backType==="flush-rebate"?Number($("#c-back-thickness").value):0
- if(S)parts.push({name:$("#c-shelf-type").value==="fixed"?"Vaste legplank":"Verstelbare legplank",length:shelfWidth,width:Math.max(1,bodyD-backDepth),count:S*bays,thickness:T,edge:["front"],note:backDepth?`Legplankdiepte verminderd met infrees-/achterwanddiepte (${backDepth} mm)`:"Geen achterwandcorrectie"});
- const backDepth=backType==="inset18"?18:backType==="flush-rebate"?Number($("#c-rebate").value):0;
- if(S)parts.push({name:$("#c-shelf-type").value==="fixed"?"Vaste legplank":"Verstelbare legplank",length:shelfWidth,width:Math.max(1,bodyD-backDepth),count:S*bays,thickness:T,edge:["front"],note:backDepth?`Legplankdiepte verminderd met infrees-/achterwanddiepte (${backDepth} mm)`:"Geen achterwandcorrectie"});
+ const bays=N+1;
+const shelfWidth=(innerW-N*T)/bays;
+const backDepth=backType==="inset18"?18:backType==="flush-rebate"?Number($("#c-back-thickness").value):0;
+
+if(S)parts.push({
+  name:$("#c-shelf-type").value==="fixed"?"Vaste legplank":"Verstelbare legplank",
+  length:shelfWidth,
+  width:Math.max(1,bodyD-backDepth),
+  count:S*bays,
+  thickness:T,
+  edge:["front"],
+  note:backDepth?`Legplankdiepte verminderd met freesdiepte (${backDepth} mm)`:"Geen achterwandcorrectie"
+});
  const backFixing=$("#c-back-fixing").value;
  let backInfo="";
  if(backType==="inset18"){
