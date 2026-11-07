@@ -27,3 +27,10 @@ BELANGRIJK
 - Kastberekeningen zijn indicatief. Controleer constructie, verbindingen, toleranties, sponningen en productiematen vóór het zagen.
 - De zaaglijst is een onderdelenoverzicht, geen geoptimaliseerde nesting.
 - Voor echte PWA-installatie en offline caching is HTTPS-hosting nodig.
+
+
+UPDATE V0.2 - PWA INSTALLATIE
+- Manifest uitgebreid met app-identiteit en display-instellingen.
+- Een apart maskable app-icoon toegevoegd.
+- Cacheversie verhoogd zodat de nieuwe bestanden worden opgehaald.
+- Na upload kan Chrome enige tijd nodig hebben om de nieuwe installatiegegevens te herkennen.
