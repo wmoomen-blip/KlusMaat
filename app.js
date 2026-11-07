@@ -41,30 +41,70 @@ $("#material-form").addEventListener("submit",e=>{
 $("#export-data").addEventListener("click",()=>{const blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"});download(blob,"klusmaat-backup.json")});
 $("#import-data").addEventListener("change",async e=>{try{const data=JSON.parse(await e.target.files[0].text());if(!Array.isArray(data.materials))throw Error();state={materials:data.materials,projects:Array.isArray(data.projects)?data.projects:[]};save();renderMaterials();renderMaterialOptions();toast("Back-up geïmporteerd")}catch{toast("Dit back-upbestand is niet geldig")}e.target.value=""});
 function download(blob,name){const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;a.click();URL.revokeObjectURL(a.href)}
+
+function syncBackFields(){
+ const type=$("#c-back-type").value;
+ $("#c-back-thickness-wrap").style.display=type==="none"?"none":"";
+ $("#c-back-fixing-wrap").style.display=type==="inset18"?"":"none";
+ $("#c-rebate-wrap").style.display=type==="flush-rebate"?"":"none";
+}
+$("#c-back-type").addEventListener("change",syncBackFields);
 function cabinetParts(){
- const W=num("#c-width"),H=num("#c-height"),D=num("#c-depth"),T=num("#c-thickness"),N=Math.floor(num("#c-dividers")),S=Math.floor(num("#c-shelves")),construction=$("#c-construction").value;
- if(![W,H,D,T].every(x=>x>0)||N<0||S<0)throw Error("Vul geldige kastmaten in.");
+ const W=num("#c-width"),H=num("#c-height"),D=num("#c-depth"),T=num("#c-thickness");
+ const N=Math.floor(num("#c-dividers")),S=Math.floor(num("#c-shelves"));
+ const construction=$("#c-construction").value,backType=$("#c-back-type").value;
+ const includesFront=$("#c-depth-includes-front").checked;
+ const frontT=num("#c-front-thickness"),gap=num("#c-door-gap");
+ if(![W,H,D,T].every(x=>Number.isFinite(x)&&x>0)||N<0||S<0)throw Error("Vul geldige kastmaten in.");
+ if(includesFront && (!Number.isFinite(frontT)||frontT<=0||frontT>=D))throw Error("Controleer de frontdikte en totale diepte.");
+ const bodyD=includesFront?D-frontT:D;
  const between=construction==="between",innerW=W-2*T,innerH=H-2*T;
- if(innerW<=0||innerH<=0)throw Error("De kastmaten zijn te klein voor deze plaatdikte.");
+ if(innerW<=0||innerH<=0||bodyD<=0)throw Error("De kastmaten zijn te klein voor deze plaatdikte.");
  const parts=[
-  {name:"Zijwand",length:H,width:D,count:2,edge:["front"]},
-  {name:"Bovenblad",length:between?innerW:W,width:D,count:1,edge:["front"]},
-  {name:"Bodem",length:between?innerW:W,width:D,count:1,edge:["front"]}
+  {name:"Zijwand",length:H,width:bodyD,count:2,thickness:T,edge:["front"],note:"Corpus"},
+  {name:"Bovenblad",length:between?innerW:W,width:bodyD,count:1,thickness:T,edge:["front"],note:"Corpus"},
+  {name:"Bodem",length:between?innerW:W,width:bodyD,count:1,thickness:T,edge:["front"],note:"Corpus"}
  ];
- if(N)parts.push({name:"Tussenwand",length:innerH,width:D,count:N,edge:["front"]});
+ if(N)parts.push({name:"Tussenwand",length:innerH,width:bodyD,count:N,thickness:T,edge:["front"],note:"Corpus"});
  const bays=N+1,shelfWidth=(innerW-N*T)/bays;
- if(S)parts.push({name:$("#c-shelf-type").value==="fixed"?"Vaste legplank":"Verstelbare legplank",length:shelfWidth,width:D-20,count:S*bays,edge:["front"]});
- if($("#c-back").checked){const bt=num("#c-back-thickness");let bl=W,bh=H;if($("#c-back-type").value==="inset"){bl=innerW;bh=innerH}parts.push({name:"Achterwand",length:bh,width:bl,count:1,thickness:bt,edge:[]})}
- return parts;
+ if(S)parts.push({name:$("#c-shelf-type").value==="fixed"?"Vaste legplank":"Verstelbare legplank",length:shelfWidth,width:Math.max(1,bodyD-(backType==="inset18"?18:backType==="flush-rebate"?10:0)),count:S*bays,thickness:T,edge:["front"],note:"Legplankdiepte is verminderd voor achterwandruimte"});
+ const backFixing=$("#c-back-fixing").value;
+ let backInfo="";
+ if(backType==="inset18"){
+  parts.push({name:"Inliggende achterwand 18 mm",length:innerH,width:innerW,count:1,thickness:18,edge:[],note:"Tussen de corpusdelen; bevestiging: "+(backFixing==="screws"?"schroeven":"verlijmde deuvels")});
+  backInfo=`Achterwand: 18 mm inliggend, ${backFixing==="screws"?"geschroefd":"verlijmd met deuvels"}. Achterwandmaat is binnenmaat corpus; controleer eventuele sponning en gewenste kastdiepte.`;
+ }else if(backType==="flush-rebate"){
+  const bt=Number($("#c-back-thickness").value),rebate=Math.max(1,num("#c-rebate"));
+  if(![3,4,6,8,10].includes(bt))throw Error("Kies voor deze uitvoering een achterwand van 3, 4, 6, 8 of 10 mm.");
+  if(rebate<=0||rebate>=Math.min(innerW,innerH)/2)throw Error("Controleer de opleg-/infreesbreedte.");
+  // Panel overlaps the clear opening by rebate width on all four sides.
+  const bw=innerW+2*rebate,bh=innerH+2*rebate;
+  parts.push({name:`Ingefreesde achterwand ${bt} mm`,length:bh,width:bw,count:1,thickness:bt,edge:[],note:`Spijkeren; opleg ${rebate} mm rondom; infreesdiepte gelijk aan plaatdikte (${bt} mm) zodat achterzijde vlak ligt`});
+  backInfo=`Achterwand: ${bt} mm; opleg/inschuifmaat ${rebate} mm rondom; freesdiepte ${bt} mm voor een vlakke achterzijde; gespijkerd. Controleer de hoek-/sponningdetails op jouw machine.`;
+ }
+ const doorGap=gap;
+ if($("#c-door").checked){
+  const dw=W-2*doorGap,dh=H-2*doorGap;
+  if(dw<=0||dh<=0)throw Error("De deurspeling is te groot voor de kastmaat.");
+  parts.push({name:"Opliggende deur",length:dh,width:dw,count:1,thickness:frontT,edge:["front","back","left","right"],note:`Deurmaat met ${doorGap} mm speling rondom; scharnieroverlap nog controleren`});
+ }
+ return {parts,W,H,D,T,bodyD,innerW,innerH,backInfo,frontT,includesFront,backType};
 }
 $("#calculate-cabinet").addEventListener("click",()=>{
  try{
-  const parts=cabinetParts(),total=parts.reduce((s,p)=>s+p.length*p.width*p.count/1e6,0),count=parts.reduce((s,p)=>s+p.count,0);
+  const result=cabinetParts(),parts=result.parts;
+  const total=parts.reduce((s,p)=>s+p.length*p.width*p.count/1e6,0),count=parts.reduce((s,p)=>s+p.count,0);
   const mat=state.materials.find(m=>m.id===$("#c-material").value);
-  const thickness=num("#c-thickness");
-  const html=`<article class="item-card"><div class="stats"><div class="stat"><b>${count}</b><small>Onderdelen</small></div><div class="stat"><b>${total.toFixed(2).replace(".",",")}</b><small>m² plaatoppervlak</small></div><div class="stat"><b>${mat?esc(mat.name):"—"}</b><small>Materiaal</small></div></div><h3>Onderdelenlijst</h3>${parts.map(p=>`<div class="part-row"><span><b>${esc(p.name)}</b><br>${p.length} × ${p.width} × ${p.thickness||thickness} mm</span><b>${p.count} st.</b></div>`).join("")}<p class="muted">Controleer verbindingen, speling, sponningen en exacte achterwandmaat vóór productie. De berekening is een uitgangspunt, geen productietekening.</p><button class="button primary full" id="send-cutlist">Open onderdelen in zaaglijst</button></article>`;
-  $("#cabinet-result").innerHTML=html;
+  const rows=parts.map(p=>`<div class="part-row"><span><b>${esc(p.name)}</b><br>${p.length} × ${p.width} × ${p.thickness} mm${p.note?`<br><small>${esc(p.note)}</small>`:""}</span><b>${p.count} st.</b></div>`).join("");
+  const summary=`Buitenmaat ${result.W} × ${result.D} × ${result.H} mm · corpusdiepte ${result.bodyD} mm · binnenbreedte ${result.innerW} mm · binnenhoogte ${result.innerH} mm`;
+  $("#cabinet-result").innerHTML=`<article class="item-card"><div class="stats"><div class="stat"><b>${count}</b><small>Onderdelen</small></div><div class="stat"><b>${total.toFixed(2).replace(".",",")}</b><small>m² bruto oppervlak</small></div><div class="stat"><b>${mat?esc(mat.name):"—"}</b><small>Materiaal</small></div></div><p><b>${summary}</b></p><h3>Onderdelenlijst</h3>${rows}<div class="notice"><b>Achterwand / constructie</b><p>${esc(result.backInfo||"Geen achterwand geselecteerd.")}</p><p>Controleer de exacte verbindingen, frees-/sponningdetails, scharnieroverlap, deurspeling en zaagvolgorde vóór productie. Dit is een werkvoorbereidingsvoorstel, geen productietekening.</p></div><button class="button primary full" id="send-cutlist">Open onderdelen in zaaglijst</button><button class="button outline full" id="download-cabinet">Download onderdelenlijst (CSV)</button></article>`;
   $("#send-cutlist").addEventListener("click",()=>{$("#cut-input").value=parts.map(p=>`${p.name},${p.length},${p.width},${p.count}`).join("\n");showTab("cutlist");calculateCutlist()});
+  $("#download-cabinet").addEventListener("click",()=>{
+   const rows=[["Onderdeel","Lengte mm","Breedte mm","Dikte mm","Aantal","Opmerking"]];
+   parts.forEach(p=>rows.push([p.name,p.length,p.width,p.thickness,p.count,p.note||""]));
+   const csv=rows.map(r=>r.map(v=>`"${String(v??"").replaceAll('"','""')}"`).join(";")).join("\n");
+   download(new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8"}),"klusmaat-kast-onderdelen.csv");
+  });
  }catch(e){toast(e.message)}
 });
 function calculateCutlist(){
@@ -75,7 +115,7 @@ function calculateCutlist(){
  $("#download-cut").addEventListener("click",()=>{const csv="Onderdeel;Lengte mm;Breedte mm;Aantal\n"+valid.map(p=>[p.name,p.l,p.w,p.c].join(";")).join("\n");download(new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8"}),"klusmaat-zaaglijst.csv")});
 }
 $("#calculate-cutlist").addEventListener("click",calculateCutlist);
-renderMaterials();renderMaterialOptions();calculateCutlist();if($("#p-material")){$("#p-material").dispatchEvent(new Event("change"));}
+renderMaterials();renderMaterialOptions();calculateCutlist();syncBackFields();if($("#p-material")){$("#p-material").dispatchEvent(new Event("change"));}
 if("serviceWorker" in navigator && location.protocol.startsWith("http"))window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));
 
 function parsePlannerParts(){

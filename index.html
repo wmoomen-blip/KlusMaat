@@ -71,20 +71,25 @@
   </section>
 
   <section id="cabinet" class="panel">
-    <div class="section-head"><div><p class="eyebrow">CORPUS BEREKENEN</p><h2>Kastcalculator</h2></div></div>
+    <div class="section-head"><div><p class="eyebrow">CORPUS BEREKENEN</p><h2>Kastwerkvoorbereiding</h2></div><span class="pill">v0.4 test</span></div>
     <div class="card form-grid">
       <label class="full">Constructie<select id="c-construction"><option value="between">Boven- en onderblad tussen zijwanden</option><option value="over">Boven- en onderblad over zijwanden</option></select></label>
-      <label>Breedte (mm)<input id="c-width" type="number" min="1" value="1200"></label>
-      <label>Hoogte (mm)<input id="c-height" type="number" min="1" value="2400"></label>
-      <label>Diepte (mm)<input id="c-depth" type="number" min="1" value="560"></label>
-      <label>Plaatdikte (mm)<input id="c-thickness" type="number" min="1" value="18"></label>
-      <label>Aantal tussenwanden<input id="c-dividers" type="number" min="0" step="1" value="1"></label>
+      <label>Breedte buitenmaat (mm)<input id="c-width" type="number" min="1" value="600"></label>
+      <label>Hoogte buitenmaat (mm)<input id="c-height" type="number" min="1" value="2000"></label>
+      <label>Diepte totaal (mm)<input id="c-depth" type="number" min="1" value="600"></label>
+      <label>Plaatdikte corpus (mm)<input id="c-thickness" type="number" min="1" value="18"></label>
+      <label class="check full"><input id="c-depth-includes-front" type="checkbox" checked> Diepte is inclusief front/deur</label>
+      <label>Frontdikte (mm)<input id="c-front-thickness" type="number" min="1" value="18"></label>
+      <label>Deurspeling rondom (mm)<input id="c-door-gap" type="number" min="0" step="0.5" value="2"></label>
+      <label>Aantal tussenwanden<input id="c-dividers" type="number" min="0" step="1" value="0"></label>
       <label>Legplanken per vak<input id="c-shelves" type="number" min="0" step="1" value="3"></label>
       <label class="full">Materiaal<select id="c-material"></select></label>
-      <label class="check full"><input id="c-back" type="checkbox" checked> Achterwand meenemen</label>
-      <label>Achterwanddikte (mm)<input id="c-back-thickness" type="number" min="1" value="8"></label>
-      <label>Achterwandpositie<select id="c-back-type"><option value="overlay">Opliggend</option><option value="inset">Inliggend</option><option value="groove">In sponning (maat nog handmatig controleren)</option></select></label>
       <label class="full">Legplanken<select id="c-shelf-type"><option value="adjustable">Verstelbaar (losse legplanken)</option><option value="fixed">Vast (tussenwanden / corpus)</option></select></label>
+      <label class="full">Achterwandconstructie<select id="c-back-type"><option value="inset18">Inliggende achterwand 18 mm</option><option value="flush-rebate">Ingefreesde achterwand, achterzijde vlak</option><option value="none">Geen achterwand</option></select></label>
+      <label id="c-back-thickness-wrap">Achterwanddikte<select id="c-back-thickness"><option value="3">3 mm</option><option value="4">4 mm</option><option value="6">6 mm</option><option value="8" selected>8 mm</option><option value="10">10 mm</option><option value="18">18 mm</option></select></label>
+      <label id="c-back-fixing-wrap">Bevestiging inliggende 18 mm achterwand<select id="c-back-fixing"><option value="screws">Schroeven</option><option value="dowels">Verlijmen met deuvels</option></select></label>
+      <label id="c-rebate-wrap">Opleg / infreesbreedte (mm)<input id="c-rebate" type="number" min="1" value="10"></label>
+      <label class="full check"><input id="c-door" type="checkbox" checked> Eén opliggende deur meenemen</label>
       <button class="button primary full" id="calculate-cabinet" type="button">Bereken onderdelen</button>
     </div>
     <div id="cabinet-result" class="stack"></div>

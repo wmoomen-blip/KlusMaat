@@ -42,3 +42,12 @@ UPDATE V0.3 - PLAATZAAGPLANNER (TEST)
 - Rotatie alleen beschikbaar bij materiaal zonder nerfrichting.
 - Schematische indeling per plaat en CSV-export.
 - Geen gegarandeerd optimale nesting; controleer altijd vóór productie.
+
+
+UPDATE V0.4 - KASTWERKVOORBEREIDING
+- Diepte inclusief front optioneel; corpusdiepte wordt berekend.
+- Deurmaat met instelbare speling rondom.
+- Inliggende achterwand 18 mm met keuze schroeven of deuvels + lijm.
+- Ingefreesde achterwand 3/4/6/8/10 mm met instelbare 10 mm opleg en vlakke achterzijde (freesdiepte gelijk aan paneeldikte).
+- CSV-export onderdelenlijst.
+- Berekeningen zijn voorlopig en moeten vóór productie gecontroleerd worden.
