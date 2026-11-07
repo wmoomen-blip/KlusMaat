@@ -57,3 +57,6 @@ UPDATE - LEGPLANKDIEPTE ACHTERWAND
 - Bij een ingefreesde achterwand wordt de legplankdiepte verminderd met de gekozen achterwanddikte/freesdiepte.
 - De oplegbreedte (standaard 10 mm) wordt niet meer ten onrechte als dieptecorrectie gebruikt.
 - Bij een inliggende achterwand van 18 mm blijft de correctie 18 mm.
+
+UPDATE V0.5 - CACHE VERVERSEN
+- Service-worker cacheversie verhoogd zodat de bijgewerkte app.js wordt geladen.
