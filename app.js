@@ -65,7 +65,7 @@ function cabinetParts(){
   {name:"Bovenblad",length:between?innerW:W,width:bodyD,count:1,thickness:T,edge:["front"],note:"Corpus"},
   {name:"Bodem",length:between?innerW:W,width:bodyD,count:1,thickness:T,edge:["front"],note:"Corpus"}
  ];
- if(N)parts.push({name:"Tussenwand",length:innerH,width:bodyD,count:N,thickness:T,edge:["front"],note:"Corpus"});
+ const backDepth=backType==="inset18"?18:backType==="flush-rebate"?Number($("#c-rebate").value):0
  const bays=N+1,shelfWidth=(innerW-N*T)/bays;
  // De plank stopt bij de binnenzijde van de achterwanduitsparing.
  // De oplegbreedte bepaalt de overlap; de freesdiepte volgt de achterwanddikte.
