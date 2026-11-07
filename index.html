@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#172d29">
+  <meta name="description" content="KlusMaat - rekenen, plannen en voorbereiden voor meubel- en interieurbouw.">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="styles.css">
+  <title>KlusMaat</title>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><div class="brand-mark">K</div><div><strong>KlusMaat</strong><small>SLIM REKENEN. SNELLER KLUSSEN.</small></div></div>
+  <span class="version">V0.1 TEST</span>
+</header>
+<main>
+  <section class="intro">
+    <p class="eyebrow">WERKVOORBEREIDING</p>
+    <h1>Waar gaan we mee aan de slag?</h1>
+    <p>Een eerste mobiele basis voor meten, materiaalbeheer en kastwerkvoorbereiding.</p>
+  </section>
+
+  <nav class="tabs" aria-label="Hoofdnavigatie">
+    <button class="tab active" data-tab="home">Start</button>
+    <button class="tab" data-tab="materials">Materialen</button>
+    <button class="tab" data-tab="cabinet">Kastcalculator</button>
+    <button class="tab" data-tab="cutlist">Zaaglijst</button>
+  </nav>
+
+  <section id="home" class="panel active">
+    <div class="hero-card">
+      <span class="eyebrow light">KLUSMAAT 0.1</span>
+      <h2>Van kastontwerp naar werkvoorbereiding.</h2>
+      <p>Begin met je materiaalbibliotheek of maak direct een eenvoudige corpusberekening.</p>
+      <button class="button pale" data-go="cabinet">Nieuwe kast berekenen</button>
+    </div>
+    <div class="quick-grid">
+      <button class="quick-card" data-go="materials"><span class="quick-icon">▤</span><b>Materiaalbibliotheek</b><small>Formaten, diktes en prijzen</small></button>
+      <button class="quick-card" data-go="cabinet"><span class="quick-icon">▦</span><b>Kastcalculator</b><small>Corpus en onderdelen</small></button>
+      <button class="quick-card" data-go="cutlist"><span class="quick-icon">⌗</span><b>Zaaglijst</b><small>Onderdelen invoeren</small></button>
+      <button class="quick-card" data-go="materials"><span class="quick-icon">＋</span><b>Eigen materiaal</b><small>Zelf plaatformaten toevoegen</small></button>
+    </div>
+    <div class="notice"><b>Goed om te weten</b><p>Dit is versie 0.1. Je gegevens worden op dit apparaat bewaard in de browser. Maak regelmatig een back-up via de exportfunctie bij Materialen.</p></div>
+  </section>
+
+  <section id="materials" class="panel">
+    <div class="section-head"><div><p class="eyebrow">BIBLIOTHEEK</p><h2>Materialen</h2></div><span class="pill">Lokaal opgeslagen</span></div>
+    <form id="material-form" class="card form-grid">
+      <label class="full">Materiaalsoort<select id="m-type"><option>Gemelamineerd spaanplaat</option><option>MDF</option><option>Multiplex</option><option>OSB</option><option>Massief hout</option><option>HPL</option><option>Anders</option></select></label>
+      <label class="full">Naam / decor<input id="m-name" required placeholder="Bijv. Wit 18 mm"></label>
+      <label>Plaatlengte (mm)<input id="m-length" type="number" min="1" value="2800" required></label>
+      <label>Plaatbreedte (mm)<input id="m-width" type="number" min="1" value="2070" required></label>
+      <label>Dikte (mm)<input id="m-thickness" type="number" min="1" value="18" required></label>
+      <label>Prijs per plaat (€)<input id="m-price" type="number" min="0" step=".01" value="65"></label>
+      <label class="full">Nerfrichting<select id="m-grain"><option value="length">Lengterichting</option><option value="width">Breedterichting</option><option value="none">Geen / niet van toepassing</option></select></label>
+      <label class="full">Veer-en-groef<select id="m-tg"><option value="none">Geen</option><option value="long">Lange zijden</option><option value="short">Korte zijden</option><option value="both">Lange en korte zijden</option></select></label>
+      <label class="full">Netto maatcorrectie (mm)<small>Optioneel: aftrek per plaatrand voor veer/groef of andere randafwerking.</small><input id="m-edge" type="number" min="0" value="0"></label>
+      <button class="button primary full" type="submit">Materiaal toevoegen</button>
+    </form>
+    <div class="row-between"><h3>Mijn materialen</h3><div class="row"><button class="button small outline" id="export-data">Export</button><label class="button small outline file-button">Import<input type="file" id="import-data" accept="application/json"></label></div></div>
+    <div id="material-list" class="stack"></div>
+  </section>
+
+  <section id="cabinet" class="panel">
+    <div class="section-head"><div><p class="eyebrow">CORPUS BEREKENEN</p><h2>Kastcalculator</h2></div></div>
+    <div class="card form-grid">
+      <label class="full">Constructie<select id="c-construction"><option value="between">Boven- en onderblad tussen zijwanden</option><option value="over">Boven- en onderblad over zijwanden</option></select></label>
+      <label>Breedte (mm)<input id="c-width" type="number" min="1" value="1200"></label>
+      <label>Hoogte (mm)<input id="c-height" type="number" min="1" value="2400"></label>
+      <label>Diepte (mm)<input id="c-depth" type="number" min="1" value="560"></label>
+      <label>Plaatdikte (mm)<input id="c-thickness" type="number" min="1" value="18"></label>
+      <label>Aantal tussenwanden<input id="c-dividers" type="number" min="0" step="1" value="1"></label>
+      <label>Legplanken per vak<input id="c-shelves" type="number" min="0" step="1" value="3"></label>
+      <label class="full">Materiaal<select id="c-material"></select></label>
+      <label class="check full"><input id="c-back" type="checkbox" checked> Achterwand meenemen</label>
+      <label>Achterwanddikte (mm)<input id="c-back-thickness" type="number" min="1" value="8"></label>
+      <label>Achterwandpositie<select id="c-back-type"><option value="overlay">Opliggend</option><option value="inset">Inliggend</option><option value="groove">In sponning (maat nog handmatig controleren)</option></select></label>
+      <label class="full">Legplanken<select id="c-shelf-type"><option value="adjustable">Verstelbaar (losse legplanken)</option><option value="fixed">Vast (tussenwanden / corpus)</option></select></label>
+      <button class="button primary full" id="calculate-cabinet" type="button">Bereken onderdelen</button>
+    </div>
+    <div id="cabinet-result" class="stack"></div>
+  </section>
+
+  <section id="cutlist" class="panel">
+    <div class="section-head"><div><p class="eyebrow">WERKPLAATS</p><h2>Zaaglijst</h2></div></div>
+    <div class="card">
+      <p class="muted">Voer per regel in: <b>naam,lengte,breedte,aantal</b> (mm). Bijvoorbeeld: Legplank,800,450,3.</p>
+      <textarea id="cut-input" rows="7">Zijwand,2400,560,2
+Bovenblad,1164,560,1
+Bodem,1164,560,1
+Legplank,564,540,4</textarea>
+      <button class="button primary full" id="calculate-cutlist">Maak zaaglijst</button>
+    </div>
+    <div id="cut-result" class="stack"></div>
+  </section>
+</main>
+<footer><span>KlusMaat · Testversie 0.1</span><span>Gemaakt om verder uit te bouwen</span></footer>
+<div id="toast" role="status" aria-live="polite"></div>
+<script src="app.js"></script>
+</body>
+</html>

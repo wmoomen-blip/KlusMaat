@@ -1,0 +1,29 @@
+KLUSMAAT - STARTPAKKET V0.1
+
+INHOUD
+- index.html: appscherm
+- styles.css: vormgeving
+- app.js: berekeningen en lokale opslag
+- manifest.webmanifest: PWA-instellingen
+- sw.js: offline cache
+- icons/: app-iconen
+
+SNEL TESTEN OP EEN COMPUTER
+1. Pak klusmaat-startpakket.zip uit.
+2. Open de map in Visual Studio Code.
+3. Installeer eventueel de extensie 'Live Server'.
+4. Klik met rechts op index.html en kies 'Open with Live Server'.
+
+TESTEN OP ANDROID
+1. Zet de volledige map online via een HTTPS-hostingdienst.
+2. Open de HTTPS-link in Chrome op Android.
+3. Kies Chrome-menu (⋮) > 'App installeren' of 'Toevoegen aan startscherm'.
+4. De app kan daarna als icoon worden gestart.
+
+BELANGRIJK
+- De app gebruikt localStorage: gegevens blijven op hetzelfde apparaat en in dezelfde browser.
+- Verwijder browsergegevens niet zonder eerst via Materialen > Export een back-up te maken.
+- Dit is een vroege testversie. Geen accounts, cloudsync, betaalfunctie of definitieve zaagoptimalisatie.
+- Kastberekeningen zijn indicatief. Controleer constructie, verbindingen, toleranties, sponningen en productiematen vóór het zagen.
+- De zaaglijst is een onderdelenoverzicht, geen geoptimaliseerde nesting.
+- Voor echte PWA-installatie en offline caching is HTTPS-hosting nodig.
