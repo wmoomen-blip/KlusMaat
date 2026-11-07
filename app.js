@@ -130,7 +130,7 @@ function planSheets(){
   }
   if(!placed)throw Error(`Onderdeel ${part.name} (${part.l}×${part.w} mm) past niet op de netto plaatmaat ${usableL}×${usableW} mm.`);
  }
- return {mat,kerf,trim,usableL,usableW,sheets,bad,method:$("#p-method").value,allowRotate};
+ return {mat,kerf,trim,usableL,usableW,sheets,bad:parsed.bad,method:$("#p-method").value,allowRotate};
 }
 function renderPlan(){
  try{
