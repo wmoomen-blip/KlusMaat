@@ -67,16 +67,17 @@ function cabinetParts(){
  ];
  const bays=N+1;
 const shelfWidth=(innerW-N*T)/bays;
-const backDepth=backType==="inset18"?18:backType==="flush-rebate"?Number($("#c-back-thickness").value):0;
+const backThicknessAllowance=backType==="inset18"?18:backType==="flush-rebate"?Number($("#c-back-thickness").value):0;
 
+if(S && bodyD<=backThicknessAllowance)throw Error("De corpusdiepte is te klein voor de gekozen achterwand.");
 if(S)parts.push({
   name:$("#c-shelf-type").value==="fixed"?"Vaste legplank":"Verstelbare legplank",
   length:shelfWidth,
-  width:Math.max(1,bodyD-backDepth),
+  width:bodyD-backThicknessAllowance,
   count:S*bays,
   thickness:T,
   edge:["front"],
-  note:backDepth?`Legplankdiepte verminderd met freesdiepte (${backDepth} mm)`:"Geen achterwandcorrectie"
+  note:backThicknessAllowance?`Legplankdiepte verminderd met achterwanddikte (${backThicknessAllowance} mm); sponningbreedte staat hier los van`:"Geen achterwandcorrectie"
 });
  const backFixing=$("#c-back-fixing").value;
  let backInfo="";
