@@ -2,7 +2,7 @@
   "id": "./",
   "name": "KlusMaat",
   "short_name": "KlusMaat",
-  "description": "Werkvoorbereiding voor meubel- en interieurbouw",
+  "description": "Werkvoorbereiding, materiaalbeheer en plaatzaagplanning voor meubel- en interieurbouw",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

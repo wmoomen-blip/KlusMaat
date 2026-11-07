@@ -33,6 +33,7 @@
     <button class="tab" data-tab="materials">Materialen</button>
     <button class="tab" data-tab="cabinet">Kastcalculator</button>
     <button class="tab" data-tab="cutlist">Zaaglijst</button>
+    <button class="tab" data-tab="planner">Plaatplanner</button>
   </nav>
 
   <section id="home" class="panel active">
@@ -100,6 +101,26 @@ Legplank,564,540,4</textarea>
       <button class="button primary full" id="calculate-cutlist">Maak zaaglijst</button>
     </div>
     <div id="cut-result" class="stack"></div>
+  </section>
+
+  <section id="planner" class="panel">
+    <div class="section-head"><div><p class="eyebrow">PLAATMATERIAAL</p><h2>Plaatzaagplanner</h2></div><span class="pill">Test v0.3</span></div>
+    <div class="card form-grid">
+      <label class="full">Materiaal / plaatformaat<select id="p-material"></select></label>
+      <label class="full">Zaagmethode<select id="p-method"><option value="panel">Formaatzaag / paneelzaag</option><option value="track">Invalzaag met geleiderail</option></select></label>
+      <label>Zaagbladbreedte (mm)<input id="p-kerf" type="number" min="0" step="0.1" value="3.2"></label>
+      <label>Randverlies per plaatrand (mm)<input id="p-trim" type="number" min="0" step="1" value="0"></label>
+      <label class="check full"><input id="p-rotate" type="checkbox" checked> Draaien toestaan (alleen als nerfrichting dit toelaat)</label>
+      <label class="full">Onderdelenlijst <small>Per regel: naam,lengte,breedte,aantal in mm. Je kunt de lijst uit de Zaaglijst kopiëren.</small>
+        <textarea id="p-input" rows="7" placeholder="Zijwand,2400,560,2&#10;Bovenblad,1164,560,1&#10;Bodem,1164,560,1&#10;Legplank,564,540,4">Zijwand,2400,560,2
+Bovenblad,1164,560,1
+Bodem,1164,560,1
+Legplank,564,540,4</textarea>
+      </label>
+      <button class="button primary full" id="make-plan" type="button">Bereken plaatindeling</button>
+    </div>
+    <div id="plan-result" class="stack"></div>
+    <div class="notice"><b>Belangrijk over deze testplanner</b><p>De indeling gebruikt een eenvoudige stroken-/rijmethode en houdt rekening met plaatmaat, zaagbladbreedte en rotatie-instelling. Dit is nog geen bewezen optimale nesting of volledige zaagoptimalisatie. Controleer de zaagvolgorde, opspanning, nerf en randkwaliteit vóór het zagen.</p></div>
   </section>
 </main>
 <footer><span>KlusMaat · Testversie 0.1</span><span>Gemaakt om verder uit te bouwen</span></footer>

@@ -34,3 +34,11 @@ UPDATE V0.2 - PWA INSTALLATIE
 - Een apart maskable app-icoon toegevoegd.
 - Cacheversie verhoogd zodat de nieuwe bestanden worden opgehaald.
 - Na upload kan Chrome enige tijd nodig hebben om de nieuwe installatiegegevens te herkennen.
+
+
+UPDATE V0.3 - PLAATZAAGPLANNER (TEST)
+- Eenvoudige stroken-/rijindeling met zaagbladbreedte.
+- Keuze formaatzaag of invalzaag met geleiderail.
+- Rotatie alleen beschikbaar bij materiaal zonder nerfrichting.
+- Schematische indeling per plaat en CSV-export.
+- Geen gegarandeerd optimale nesting; controleer altijd vóór productie.
