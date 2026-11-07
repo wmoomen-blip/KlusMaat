@@ -65,7 +65,7 @@ function cabinetParts(){
   {name:"Bovenblad",length:between?innerW:W,width:bodyD,count:1,thickness:T,edge:["front"],note:"Corpus"},
   {name:"Bodem",length:between?innerW:W,width:bodyD,count:1,thickness:T,edge:["front"],note:"Corpus"}
  ];
- const backDepth=backType==="inset18"?18:backType==="flush-rebate"?Number($("#c-rebate").value):0
+ if(S)parts.push({name:$("#c-shelf-type").value==="fixed"?"Vaste legplank":"Verstelbare legplank",length:shelfWidth,width:Math.max(1,bodyD-(backType==="inset18"?18:backType==="flush-rebate"?num("#c-rebate"):0)),count:S*bays,thickness:T,edge:["front"],note:"Legplankdiepte is verminderd voor achterwandruimte"});
  const bays=N+1,shelfWidth=(innerW-N*T)/bays;
  // De plank stopt bij de binnenzijde van de achterwanduitsparing.
  // De oplegbreedte bepaalt de overlap; de freesdiepte volgt de achterwanddikte.
