@@ -67,7 +67,10 @@ function cabinetParts(){
  ];
  if(N)parts.push({name:"Tussenwand",length:innerH,width:bodyD,count:N,thickness:T,edge:["front"],note:"Corpus"});
  const bays=N+1,shelfWidth=(innerW-N*T)/bays;
- if(S)parts.push({name:$("#c-shelf-type").value==="fixed"?"Vaste legplank":"Verstelbare legplank",length:shelfWidth,width:Math.max(1,bodyD-(backType==="inset18"?18:backType==="flush-rebate"?10:0)),count:S*bays,thickness:T,edge:["front"],note:"Legplankdiepte is verminderd voor achterwandruimte"});
+ // De plank stopt bij de binnenzijde van de achterwanduitsparing.
+ // De oplegbreedte bepaalt de overlap; de freesdiepte volgt de achterwanddikte.
+ const backDepth=backType==="inset18"?18:backType==="flush-rebate"?Number($("#c-back-thickness").value):0;
+ if(S)parts.push({name:$("#c-shelf-type").value==="fixed"?"Vaste legplank":"Verstelbare legplank",length:shelfWidth,width:Math.max(1,bodyD-backDepth),count:S*bays,thickness:T,edge:["front"],note:backDepth?`Legplankdiepte verminderd met infrees-/achterwanddiepte (${backDepth} mm)`:"Geen achterwandcorrectie"});
  const backFixing=$("#c-back-fixing").value;
  let backInfo="";
  if(backType==="inset18"){

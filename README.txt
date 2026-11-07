@@ -51,3 +51,9 @@ UPDATE V0.4 - KASTWERKVOORBEREIDING
 - Ingefreesde achterwand 3/4/6/8/10 mm met instelbare 10 mm opleg en vlakke achterzijde (freesdiepte gelijk aan paneeldikte).
 - CSV-export onderdelenlijst.
 - Berekeningen zijn voorlopig en moeten vóór productie gecontroleerd worden.
+
+
+UPDATE - LEGPLANKDIEPTE ACHTERWAND
+- Bij een ingefreesde achterwand wordt de legplankdiepte verminderd met de gekozen achterwanddikte/freesdiepte.
+- De oplegbreedte (standaard 10 mm) wordt niet meer ten onrechte als dieptecorrectie gebruikt.
+- Bij een inliggende achterwand van 18 mm blijft de correctie 18 mm.
