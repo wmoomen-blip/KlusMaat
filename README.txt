@@ -62,3 +62,5 @@ UPDATE V0.5 - CACHE VERVERSEN
 - Service-worker cacheversie verhoogd zodat de bijgewerkte app.js wordt geladen.
 
 Versie 0.9.2: staanderhart tweede staander vanaf linker buitenzijde op h.o.h.-maat; eerste/laatste staander tegen wandeinden.
+
+Versie 0.9.4: instelbaar OSB-zaagverlies, minimale reststukmaat, optionele verspringende plaatbanen, reststukhergebruik. Controleer plaatnaden constructief.

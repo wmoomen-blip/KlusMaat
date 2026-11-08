@@ -20,38 +20,42 @@ const line=(card,name,value)=>{const div=document.createElement('div');div.class
 
 // Praktische rechthoekige plaatindeling: per baan, met hergebruik van reststukken.
 // Geen automatische verstevigingen. Dit is een zaag-/snijvoorstel, geen constructieve vrijgave.
-function plateLayout(wallW,wallH,plateL,plateW,direction){
+function plateLayout(wallW,wallH,plateL,plateW,direction,kerf,minOffcut,stagger){
  const pw=direction==='horizontal'?plateL:plateW,ph=direction==='horizontal'?plateW:plateL;
  const pieces=[];
- for(let y=0;y<wallH;y+=ph){for(let x=0;x<wallW;x+=pw){
-   pieces.push({x,y,w:Math.min(pw,wallW-x),h:Math.min(ph,wallH-y)});
-   if(pieces.length>2500)return {error:'Te veel plaatdelen voor deze berekening.'};
- }}
- const sheets=[];let offcuts=[];
- // Grotere delen eerst; hergebruik alleen bij dezelfde vaste plaatrichting.
+ for(let y=0,row=0;y<wallH;y+=ph,row++){
+  let x=0;
+  if(stagger==='half'&&row%2===1){const first=Math.min(wallW,pw/2);pieces.push({x:0,y,w:first,h:Math.min(ph,wallH-y)});x=first}
+  while(x<wallW){const w=Math.min(pw,wallW-x);pieces.push({x,y,w,h:Math.min(ph,wallH-y)});x+=w;
+   if(pieces.length>2500)return {error:'Te veel plaatdelen voor deze berekening.'};}
+ }
+ const sheets=[],offcuts=[];let reused=0;
+ // Best-fit reststukken, met verlies per zaagsnede. Reststukken worden niet gedraaid.
  for(const piece of [...pieces].sort((a,b)=>b.w*b.h-a.w*a.h)){
   let best=-1,smallest=Infinity;
-  for(let i=0;i<offcuts.length;i++){const r=offcuts[i];if(r.w>=piece.w&&r.h>=piece.h&&r.w*r.h<smallest){best=i;smallest=r.w*r.h}}
+  for(let i=0;i<offcuts.length;i++){const r=offcuts[i];if(r.w+0.0001>=piece.w&&r.h+0.0001>=piece.h&&r.w*r.h<smallest){best=i;smallest=r.w*r.h}}
   let source;
-  if(best>=0){source=offcuts.splice(best,1)[0]}else{source={w:pw,h:ph,sheet:sheets.length+1};sheets.push({number:source.sheet,cuts:[]})}
+  if(best>=0){source=offcuts.splice(best,1)[0];reused++}
+  else{source={w:pw,h:ph,sheet:sheets.length+1};sheets.push({number:source.sheet,cuts:[]})}
   sheets[source.sheet-1].cuts.push(piece);
-  // Rechte sneden, zonder zaagkerf. Reststroken worden apart bijgehouden.
-  if(source.w-piece.w>0)offcuts.push({w:source.w-piece.w,h:piece.h,sheet:source.sheet});
-  if(source.h-piece.h>0)offcuts.push({w:source.w,h:source.h-piece.h,sheet:source.sheet});
+  const right=source.w-piece.w-kerf,top=source.h-piece.h-kerf;
+  if(right>=minOffcut&&piece.h>=minOffcut)offcuts.push({w:right,h:piece.h,sheet:source.sheet});
+  if(top>=minOffcut&&source.w>=minOffcut)offcuts.push({w:source.w,h:top,sheet:source.sheet});
  }
- return {pieces,sheets,offcuts,pw,ph};
+ return {pieces,sheets,offcuts,pw,ph,reused,kerf,stagger};
 }
 function plateSection(parent,label,layout,action){
  const heading=document.createElement('h3');heading.textContent=label+' – plaatindeling';heading.style.marginTop='24px';parent.append(heading);
  if(layout.error){const p=document.createElement('p');p.textContent=layout.error;parent.append(p);return}
  line(parent,'Benodigde hele platen',layout.sheets.length+' stuks ('+layout.pw+' × '+layout.ph+' mm)');
  line(parent,'Plaatdelen op maat',layout.pieces.length+' stuks · '+action);
+ line(parent,'Hergebruikte reststukken',layout.reused+' stuks');
  const details=document.createElement('details');details.style.marginTop='10px';const summary=document.createElement('summary');summary.textContent='Bekijk zaag-/snijmaten en plaatsing';details.append(summary);
  const list=document.createElement('div');list.style.cssText='max-height:330px;overflow:auto;margin-top:10px';
  layout.pieces.forEach((p,i)=>line(list,'Deel '+(i+1)+' · vanaf links '+p.x+' / vloer '+p.y+' mm',p.w+' × '+p.h+' mm'));
  details.append(list);parent.append(details);
  const used=layout.pieces.reduce((a,p)=>a+p.w*p.h,0),total=layout.sheets.length*layout.pw*layout.ph;
- const info=document.createElement('p');info.className='muted';info.textContent='Restoppervlak circa '+((total-used)/1e6).toFixed(2)+' m². Rechte sneden, geen zaagbladverlies, geen rekening met tand-en-groef, afgeschuinde gipskanten, voegverspringing of minimale reststukmaat. Controleer de plaatnaden en bevestiging in de praktijk.';parent.append(info);
+ const info=document.createElement('p');info.className='muted';info.textContent='Niet benut oppervlak circa '+((total-used)/1e6).toFixed(2)+' m² (inclusief snij-/zaagverlies en niet bruikbare stroken). '+(layout.kerf?'Zaagverlies '+layout.kerf+' mm per snede. ':'')+(layout.stagger==='half'?'Afwisselend halve plaat als startdeel. ':'')+'Let op: de voorgestelde naden zijn niet automatisch constructief ondersteund. Controleer staanders, plaatranden, tand-en-groef en bevestiging.';parent.append(info);
 }
 
 $('w-calculate').addEventListener('click',calculate);
@@ -85,6 +89,8 @@ for(const cut of [...cuts].sort((a,b)=>b-a)){
  if(cut>stock){oversize.push(cut);continue}
  let found=bins.findIndex(rem=>rem>=cut);if(found<0)bins.push(stock-cut);else bins[found]-=cut;
 }
+const kerf=num('w-osb-kerf'),minOffcut=num('w-min-offcut'),stagger=$('w-stagger').value;
+if(!Number.isFinite(kerf)||kerf<0||kerf>15||!Number.isFinite(minOffcut)||minOffcut<0){el.textContent='Controleer zaagverlies en reststukmaat.';return}
 const area=width*height/1e6,osb=$('w-osb').value,gypsum=$('w-gypsum').value==='yes',ins=$('w-insulation').value;
 const card=document.createElement('div');card.className='card';const h=document.createElement('h3');h.textContent='Materiaallijst – '+profile.value+' mm';card.append(h);
 line(card,'Oppervlakte wand',area.toFixed(2)+' m²');line(card,'Staanders',studs+' × '+studLength+' mm');line(card,'Staanderharten vanaf links',positions.map(x=>Math.round(x)).join(' / ')+' mm');line(card,'Horizontale regels',between?'2 × '+width+' mm':segmentLengths.length+' vakken boven en onder');
@@ -92,8 +98,8 @@ line(card,'Totale regellengte',(total/1000).toFixed(2)+' m');line(card,'Handelsl
 if(ins!=='none')line(card,'Isolatie '+ins,(area*extra).toFixed(2)+' m², '+num('w-ins-thickness')+' mm');
 if(osb!=='none')line(card,'OSB (oppervlakte-indicatie, zagen mogelijk)',ceil(area*extra,num('w-osb-length')*num('w-osb-width')/1e6)+' platen');
 if(gypsum)line(card,'Gips (oppervlakte-indicatie, snijden mogelijk)',ceil(area*extra,num('w-gyp-length')*num('w-gyp-width')/1e6)+' platen');
-if(osb!=='none')plateSection(card,'OSB',plateLayout(width,height,num('w-osb-length'),num('w-osb-width'),osb),'zagen');
-if(gypsum)plateSection(card,'Gips',plateLayout(width,height,num('w-gyp-length'),num('w-gyp-width'),$('w-gyp-direction').value),'snijden');
+if(osb!=='none')plateSection(card,'OSB',plateLayout(width,height,num('w-osb-length'),num('w-osb-width'),osb,kerf,minOffcut,stagger),'zagen');
+if(gypsum)plateSection(card,'Gips',plateLayout(width,height,num('w-gyp-length'),num('w-gyp-width'),$('w-gyp-direction').value,0,minOffcut,stagger),'snijden');
 const cutTitle=document.createElement('h3');cutTitle.textContent='Zaaglijst';cutTitle.style.marginTop='24px';card.append(cutTitle);Object.entries(grouped).sort((a,b)=>Number(b[0])-Number(a[0])).forEach(([length,count])=>line(card,count+' stuks',length+' mm'));
 if(oversize.length){const warn=document.createElement('p');warn.style.color='#a33';warn.textContent='Let op: '+oversize.length+' delen zijn langer dan de gekozen handelslengte. Kies langere handelslengtes of werk verbindingen constructief uit.';card.append(warn)}
 const drawTitle=document.createElement('h3');drawTitle.textContent='Constructietekening (schematisch)';drawTitle.style.marginTop='24px';card.append(drawTitle);
@@ -111,7 +117,7 @@ function svgCoord(ev){const box=svg.getBoundingClientRect();const vb=svg.viewBox
 function renderPoints(){svg.querySelectorAll('.w-electric-point').forEach(e=>e.remove());const clashes=[];points.forEach((p,i)=>{const {x,y}=pointCoords(p);const collision=allPositions.some(pos=>Math.abs(pos-p.x)<=Math.max(35,cross/2+25));if(collision)clashes.push(i+1);const g=makeSVG('g',{class:'w-electric-point','data-index':i,style:'cursor:grab;touch-action:none'});g.append(makeSVG('circle',{cx:x,cy:y,r:7,fill:collision?'#f97316':'#2563eb',stroke:'#fff','stroke-width':2}));const txt=makeSVG('text',{x,y:y+3,'text-anchor':'middle','font-size':9,'font-weight':'bold',fill:'#fff'});txt.textContent=i+1;g.append(txt);g.addEventListener('pointerdown',ev=>{ev.stopPropagation();moving=i;moved=false;g.setPointerCapture(ev.pointerId)});g.addEventListener('pointermove',ev=>{if(moving!==i)return;const pt=svgCoord(ev);p.x=Math.round(Math.max(0,Math.min(width,(pt.x-X)*width/W))/5)*5;p.y=Math.round(Math.max(0,Math.min(height,(Y+H-pt.y)*height/H))/5)*5;moved=true;g.querySelector("circle").setAttribute("cx",pointCoords(p).x);g.querySelector("circle").setAttribute("cy",pointCoords(p).y);g.querySelector("text").setAttribute("x",pointCoords(p).x);g.querySelector("text").setAttribute("y",pointCoords(p).y+3)});g.addEventListener('pointerup',()=>{if(moving===i){moving=-1;savePoints();refreshList();renderPoints()}});svg.append(g)});warning.textContent=clashes.length?'Let op: stroompunt(en) '+clashes.join(', ')+' overlappen mogelijk een staander (oranje). Controleer ook leidingen en elektradozen.':'Blauw = stroompunt · bruin = regelwerk. Tik op de tekening om een punt toe te voegen.'}
 svg.style.touchAction='none';svg.addEventListener('click',ev=>{if(ev.target.closest('.w-electric-point'))return;const pt=svgCoord(ev);if(pt.x<X||pt.x>X+W||pt.y<Y||pt.y>Y+H)return;points.push({x:Math.round((pt.x-X)*width/W/5)*5,y:Math.round((Y+H-pt.y)*height/H/5)*5,type:$('w-point-type').value});savePoints();calculate()});
 const t=document.createElementNS(ns,'text');t.setAttribute('x','170');t.setAttribute('y','223');t.setAttribute('text-anchor','middle');t.setAttribute('font-size','11');t.textContent=width+' mm × '+height+' mm · h.o.h. '+spacing+' mm';svg.append(t);card.append(svg);card.append(warning);renderPoints();refreshList();
-const note=document.createElement('p');note.className='muted';note.textContent='Er worden geen extra staanders of dwarsregels voor plaatnaden toegevoegd. OSB kan gezaagd en gips kan gesneden worden; een praktische plaatindeling met reststukhergebruik wordt getoond; controleer snijverlies, voegverspringing en plaatranden. Controleer plaatranden, bevestiging, aansluitingen en verankering. Staanderhart 2 ligt op de ingestelde h.o.h.-maat gemeten vanaf de buitenzijde links; de eerste en laatste staander sluiten aan op de wanduiteinden. De zaagindeling houdt nog geen rekening met zaagbladverlies; bij metal stud kunnen CW-staanders een montagekorting vereisen.';card.append(note);el.replaceChildren(card);
+const note=document.createElement('p');note.className='muted';note.textContent='Er worden geen extra staanders of dwarsregels voor plaatnaden toegevoegd. OSB kan gezaagd en gips kan gesneden worden; een praktische plaatindeling met reststukhergebruik wordt getoond; controleer snijverlies, voegverspringing en plaatranden. Controleer plaatranden, bevestiging, aansluitingen en verankering. Staanderhart 2 ligt op de ingestelde h.o.h.-maat gemeten vanaf de buitenzijde links; de eerste en laatste staander sluiten aan op de wanduiteinden. De houtzaagindeling houdt nog geen rekening met zaagbladverlies; bij metal stud kunnen CW-staanders een montagekorting vereisen.';card.append(note);el.replaceChildren(card);
 try{localStorage.setItem('klusmaat-wall-draft',JSON.stringify(Object.fromEntries([...document.querySelectorAll('#wall-form input,#wall-form select')].map(x=>[x.id,x.value]))))}catch{}
 }
 try{const saved=JSON.parse(localStorage.getItem('klusmaat-wall-draft')||'null');if(saved){if(saved['w-type'])$('w-type').value=saved['w-type'];profiles();Object.entries(saved).forEach(([id,value])=>{if($(id))$(id).value=value})}}catch{}
