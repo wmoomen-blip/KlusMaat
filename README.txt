@@ -60,3 +60,5 @@ UPDATE - LEGPLANKDIEPTE ACHTERWAND
 
 UPDATE V0.5 - CACHE VERVERSEN
 - Service-worker cacheversie verhoogd zodat de bijgewerkte app.js wordt geladen.
+
+Versie 0.9.2: staanderhart tweede staander vanaf linker buitenzijde op h.o.h.-maat; eerste/laatste staander tegen wandeinden.

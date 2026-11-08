@@ -24,23 +24,21 @@ const values=[width,height,spacing,stock,num('w-osb-length'),num('w-osb-width'),
 const el=$('w-results');if(values.some(v=>!Number.isFinite(v)||v<=0)||!Number.isFinite(waste)||waste<0||waste>100){el.textContent='Controleer de maten en toeslag.';return}
 const isWood=$('w-type').value==='wood',between=!isWood||$('w-method').value==='between';
 const cross=isWood?Number(profile.value.split(' × ')[0]):0;
-const positions=[0];for(let x=spacing;x<width;x+=spacing)positions.push(x);positions.push(width);
-// Add supporting studs at vertical OSB seams when the seam is not near an existing stud.
+// Hartmaten vanaf de buitenzijde links: eerste staander sluit aan op x=0, tweede hart op de ingestelde maat.
+const studWidth=isWood?cross:0;
+const firstCenter=studWidth/2, lastCenter=width-studWidth/2;
+const positions=[firstCenter];
+for(let x=spacing;x<lastCenter-0.001;x+=spacing){if(x>firstCenter+0.001)positions.push(x)}
+if(lastCenter>positions[positions.length-1]+0.001)positions.push(lastCenter);
+// Staanders uitsluitend volgens de ingestelde h.o.h.-maat; geen automatische plaatnaadsteunen.
 const osbDirection=$('w-osb').value,osbW=num('w-osb-width'),osbL=num('w-osb-length');
-const seamPositions=[];
-if(osbDirection==='vertical')for(let x=osbW;x<width;x+=osbW)seamPositions.push(x);
-if(osbDirection==='horizontal')for(let x=osbL;x<width;x+=osbL)seamPositions.push(x);
-const extraStuds=seamPositions.filter(x=>!positions.some(p=>Math.abs(p-x)<=Math.max(15,cross/2)));
-const allPositions=[...positions,...extraStuds].sort((a,b)=>a-b);
+const allPositions=positions;
 const studs=allPositions.length,studLength=between?height-2*cross:height;
 if(studLength<=0){el.textContent='Wandhoogte is te klein voor deze regels.';return}
-const clearWidth=width-(isWood?cross:0),segmentLengths=positions.slice(1).map((x,i)=>x-positions[i]-(isWood?cross:0));
-// Horizontal seams require noggins for OSB support, split at each stud bay.
+const clearWidth=width-(isWood?cross:0),segmentLengths=positions.slice(1).map((x,i)=>Math.max(0,x-positions[i]-(isWood?cross:0)));
+// Plaatnaden leiden niet tot extra regels: platen mogen op maat worden gezaagd/gesneden.
 const seamHeights=[];
-if(osbDirection==='vertical')for(let y=osbL;y<height;y+=osbL)seamHeights.push(y);
-if(osbDirection==='horizontal')for(let y=osbW;y<height;y+=osbW)seamHeights.push(y);
-const bayCuts=allPositions.slice(1).map((x,i)=>Math.max(0,x-allPositions[i]-(isWood?cross:0)));
-const nogginCuts=seamHeights.flatMap(()=>bayCuts);
+const nogginCuts=[];
 const cuts=between?[...Array(studs).fill(studLength),width,width,...nogginCuts]:[...Array(studs).fill(height),...segmentLengths,...segmentLengths,...nogginCuts];
 const total=cuts.reduce((a,b)=>a+b,0),extra=1+waste/100;
 const grouped={};cuts.forEach(x=>{grouped[x]=(grouped[x]||0)+1});
@@ -52,11 +50,11 @@ for(const cut of [...cuts].sort((a,b)=>b-a)){
 }
 const area=width*height/1e6,osb=$('w-osb').value,gypsum=$('w-gypsum').value==='yes',ins=$('w-insulation').value;
 const card=document.createElement('div');card.className='card';const h=document.createElement('h3');h.textContent='Materiaallijst – '+profile.value+' mm';card.append(h);
-line(card,'Oppervlakte wand',area.toFixed(2)+' m²');line(card,'Staanders',studs+' × '+studLength+' mm ('+extraStuds.length+' extra bij plaatnaden)');line(card,'Horizontale regels',between?'2 × '+width+' mm':segmentLengths.length+' vakken boven en onder');if(nogginCuts.length)line(card,'Extra dwarsregels plaatnaden',nogginCuts.length+' stuks, '+seamHeights.length+' rij(en)');
+line(card,'Oppervlakte wand',area.toFixed(2)+' m²');line(card,'Staanders',studs+' × '+studLength+' mm');line(card,'Staanderharten vanaf links',positions.map(x=>Math.round(x)).join(' / ')+' mm');line(card,'Horizontale regels',between?'2 × '+width+' mm':segmentLengths.length+' vakken boven en onder');
 line(card,'Totale regellengte',(total/1000).toFixed(2)+' m');line(card,'Handelslengtes (zaagindeling)',bins.length+' × '+stock+' mm'+(waste?' + '+waste+'% reserve (zelf toevoegen)':''));
 if(ins!=='none')line(card,'Isolatie '+ins,(area*extra).toFixed(2)+' m², '+num('w-ins-thickness')+' mm');
-if(osb!=='none')line(card,'OSB (oppervlakte-indicatie)',ceil(area*extra,num('w-osb-length')*num('w-osb-width')/1e6)+' platen');
-if(gypsum)line(card,'Gips (oppervlakte-indicatie)',ceil(area*extra,num('w-gyp-length')*num('w-gyp-width')/1e6)+' platen');
+if(osb!=='none')line(card,'OSB (oppervlakte-indicatie, zagen mogelijk)',ceil(area*extra,num('w-osb-length')*num('w-osb-width')/1e6)+' platen');
+if(gypsum)line(card,'Gips (oppervlakte-indicatie, snijden mogelijk)',ceil(area*extra,num('w-gyp-length')*num('w-gyp-width')/1e6)+' platen');
 const cutTitle=document.createElement('h3');cutTitle.textContent='Zaaglijst';cutTitle.style.marginTop='24px';card.append(cutTitle);Object.entries(grouped).sort((a,b)=>Number(b[0])-Number(a[0])).forEach(([length,count])=>line(card,count+' stuks',length+' mm'));
 if(oversize.length){const warn=document.createElement('p');warn.style.color='#a33';warn.textContent='Let op: '+oversize.length+' delen zijn langer dan de gekozen handelslengte. Kies langere handelslengtes of werk verbindingen constructief uit.';card.append(warn)}
 const drawTitle=document.createElement('h3');drawTitle.textContent='Constructietekening (schematisch)';drawTitle.style.marginTop='24px';card.append(drawTitle);
@@ -64,10 +62,8 @@ const ns='http://www.w3.org/2000/svg',svg=document.createElementNS(ns,'svg');svg
 const rect=(x,y,w,h,color)=>{const r=document.createElementNS(ns,'rect');for(const [k,v] of Object.entries({x,y,width:w,height:h,fill:color}))r.setAttribute(k,v);svg.append(r)};
 const X=18,Y=18,W=304,H=190,thick=Math.max(3,Math.min(7,cross/height*H));
 if(between){rect(X,Y,W,thick,'#ad7b43');rect(X,Y+H-thick,W,thick,'#ad7b43')}
-for(const pos of allPositions){const x=X+W*pos/width;rect(Math.min(X+W-3,Math.max(X,x-2)),Y+(between?thick:0),4,H-(between?2*thick:0),'#ad7b43')}
+for(const pos of allPositions){const x=X+W*pos/width;rect(Math.min(X+W-4,Math.max(X,x-2)),Y+(between?thick:0),4,H-(between?2*thick:0),'#ad7b43')}
 if(!between){for(let i=0;i<positions.length-1;i++){let x=X+W*positions[i]/width+2,w=W*(positions[i+1]-positions[i])/width-4;rect(x,Y,Math.max(0,w),thick,'#ad7b43');rect(x,Y+H-thick,Math.max(0,w),thick,'#ad7b43')}}
-// Mark horizontal plate seams and their backing noggins.
-for(const y of seamHeights){const sy=Y+H*(1-y/height);for(let i=0;i<allPositions.length-1;i++){const x=X+W*allPositions[i]/width+2;const w=W*(allPositions[i+1]-allPositions[i])/width-4;rect(x,sy-2,Math.max(0,w),4,'#bd9358')}}
 const makeSVG=(tag,attrs)=>{const e=document.createElementNS(ns,tag);Object.entries(attrs).forEach(([k,v])=>e.setAttribute(k,v));return e};
 const warning=document.createElement('p');warning.style.color='#9a4a12';warning.style.fontWeight='600';
 const pointCoords=(p)=>({x:X+W*p.x/width,y:Y+H*(1-p.y/height)});
@@ -76,7 +72,7 @@ function svgCoord(ev){const box=svg.getBoundingClientRect();const vb=svg.viewBox
 function renderPoints(){svg.querySelectorAll('.w-electric-point').forEach(e=>e.remove());const clashes=[];points.forEach((p,i)=>{const {x,y}=pointCoords(p);const collision=allPositions.some(pos=>Math.abs(pos-p.x)<=Math.max(35,cross/2+25));if(collision)clashes.push(i+1);const g=makeSVG('g',{class:'w-electric-point','data-index':i,style:'cursor:grab;touch-action:none'});g.append(makeSVG('circle',{cx:x,cy:y,r:7,fill:collision?'#f97316':'#2563eb',stroke:'#fff','stroke-width':2}));const txt=makeSVG('text',{x,y:y+3,'text-anchor':'middle','font-size':9,'font-weight':'bold',fill:'#fff'});txt.textContent=i+1;g.append(txt);g.addEventListener('pointerdown',ev=>{ev.stopPropagation();moving=i;moved=false;g.setPointerCapture(ev.pointerId)});g.addEventListener('pointermove',ev=>{if(moving!==i)return;const pt=svgCoord(ev);p.x=Math.round(Math.max(0,Math.min(width,(pt.x-X)*width/W))/5)*5;p.y=Math.round(Math.max(0,Math.min(height,(Y+H-pt.y)*height/H))/5)*5;moved=true;g.querySelector("circle").setAttribute("cx",pointCoords(p).x);g.querySelector("circle").setAttribute("cy",pointCoords(p).y);g.querySelector("text").setAttribute("x",pointCoords(p).x);g.querySelector("text").setAttribute("y",pointCoords(p).y+3)});g.addEventListener('pointerup',()=>{if(moving===i){moving=-1;savePoints();refreshList();renderPoints()}});svg.append(g)});warning.textContent=clashes.length?'Let op: stroompunt(en) '+clashes.join(', ')+' overlappen mogelijk een staander (oranje). Controleer ook leidingen en elektradozen.':'Blauw = stroompunt · bruin = regelwerk. Tik op de tekening om een punt toe te voegen.'}
 svg.style.touchAction='none';svg.addEventListener('click',ev=>{if(ev.target.closest('.w-electric-point'))return;const pt=svgCoord(ev);if(pt.x<X||pt.x>X+W||pt.y<Y||pt.y>Y+H)return;points.push({x:Math.round((pt.x-X)*width/W/5)*5,y:Math.round((Y+H-pt.y)*height/H/5)*5,type:$('w-point-type').value});savePoints();calculate()});
 const t=document.createElementNS(ns,'text');t.setAttribute('x','170');t.setAttribute('y','223');t.setAttribute('text-anchor','middle');t.setAttribute('font-size','11');t.textContent=width+' mm × '+height+' mm · h.o.h. '+spacing+' mm';svg.append(t);card.append(svg);card.append(warning);renderPoints();refreshList();
-const note=document.createElement('p');note.className='muted';note.textContent='Plaatnaadondersteuning is indicatief; controleer plaatranden, bevestiging en eventuele verspringende naden. Controleer aansluitingen, verankering en plaatindeling. De zaagindeling houdt nog geen rekening met zaagbladverlies; bij metal stud kunnen CW-staanders een montagekorting vereisen.';card.append(note);el.replaceChildren(card);
+const note=document.createElement('p');note.className='muted';note.textContent='Er worden geen extra staanders of dwarsregels voor plaatnaden toegevoegd. OSB kan gezaagd en gips kan gesneden worden; hergebruik van reststukken en exacte plaatindeling zijn nog niet geoptimaliseerd. Controleer plaatranden, bevestiging, aansluitingen en verankering. Staanderhart 2 ligt op de ingestelde h.o.h.-maat gemeten vanaf de buitenzijde links; de eerste en laatste staander sluiten aan op de wanduiteinden. De zaagindeling houdt nog geen rekening met zaagbladverlies; bij metal stud kunnen CW-staanders een montagekorting vereisen.';card.append(note);el.replaceChildren(card);
 try{localStorage.setItem('klusmaat-wall-draft',JSON.stringify(Object.fromEntries([...document.querySelectorAll('#wall-form input,#wall-form select')].map(x=>[x.id,x.value]))))}catch{}
 }
 try{const saved=JSON.parse(localStorage.getItem('klusmaat-wall-draft')||'null');if(saved){if(saved['w-type'])$('w-type').value=saved['w-type'];profiles();Object.entries(saved).forEach(([id,value])=>{if($(id))$(id).value=value})}}catch{}
