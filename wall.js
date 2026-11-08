@@ -20,12 +20,16 @@ const line=(card,name,value)=>{const div=document.createElement('div');div.class
 
 // Praktische rechthoekige plaatindeling: per baan, met hergebruik van reststukken.
 // Geen automatische verstevigingen. Dit is een zaag-/snijvoorstel, geen constructieve vrijgave.
-function plateLayout(wallW,wallH,plateL,plateW,direction,kerf,minOffcut,stagger){
+function plateLayout(wallW,wallH,plateL,plateW,direction,kerf,minOffcut,stagger,startWidth){
  const pw=direction==='horizontal'?plateL:plateW,ph=direction==='horizontal'?plateW:plateL;
  const pieces=[];
  for(let y=0,row=0;y<wallH;y+=ph,row++){
   let x=0;
-  if(stagger==='half'&&row%2===1){const first=Math.min(wallW,pw/2);pieces.push({x:0,y,w:first,h:Math.min(ph,wallH-y)});x=first}
+  // De eerste plaatstrook kan handmatig smaller worden gekozen. De overige naden volgen die keuze.
+  // Bij verspringing blijft iedere tweede baan beginnen met een halve plaat.
+  const custom=Number(startWidth)>0&&Number(startWidth)<pw;
+  const firstWidth=stagger==='half'&&row%2===1?pw/2:(custom?Number(startWidth):0);
+  if(firstWidth>0){const first=Math.min(wallW,firstWidth);pieces.push({x:0,y,w:first,h:Math.min(ph,wallH-y)});x=first}
   while(x<wallW){const w=Math.min(pw,wallW-x);pieces.push({x,y,w,h:Math.min(ph,wallH-y)});x+=w;
    if(pieces.length>2500)return {error:'Te veel plaatdelen voor deze berekening.'};}
  }
@@ -87,7 +91,8 @@ $('w-calculate').addEventListener('click',calculate);
 function calculate(){
 const width=num('w-width'),height=num('w-height'),spacing=num('w-spacing'),stock=num('w-stock'),waste=num('w-waste');
 const values=[width,height,spacing,stock,num('w-osb-length'),num('w-osb-width'),num('w-gyp-length'),num('w-gyp-width')];
-const el=$('w-results');if(values.some(v=>!Number.isFinite(v)||v<=0)||!Number.isFinite(waste)||waste<0||waste>100){el.textContent='Controleer de maten en toeslag.';return}
+const starts=[num('w-osb-start'),num('w-gyp-start')];
+const el=$('w-results');if(starts.some(v=>!Number.isFinite(v)||v<0)||values.some(v=>!Number.isFinite(v)||v<=0)||!Number.isFinite(waste)||waste<0||waste>100){el.textContent='Controleer de maten en toeslag.';return}
 const isWood=$('w-type').value==='wood',between=!isWood||$('w-method').value==='between';
 const cross=isWood?Number(profile.value.split(' × ')[0]):0;
 // Hartmaten vanaf de buitenzijde links: eerste staander sluit aan op x=0, tweede hart op de ingestelde maat.
@@ -123,8 +128,8 @@ line(card,'Totale regellengte',(total/1000).toFixed(2)+' m');line(card,'Handelsl
 if(ins!=='none')line(card,'Isolatie '+ins,(area*extra).toFixed(2)+' m², '+num('w-ins-thickness')+' mm');
 if(osb!=='none')line(card,'OSB (oppervlakte-indicatie, zagen mogelijk)',ceil(area*extra,num('w-osb-length')*num('w-osb-width')/1e6)+' platen');
 if(gypsum)line(card,'Gips (oppervlakte-indicatie, snijden mogelijk)',ceil(area*extra,num('w-gyp-length')*num('w-gyp-width')/1e6)+' platen');
-if(osb!=='none')plateSection(card,'OSB',plateLayout(width,height,num('w-osb-length'),num('w-osb-width'),osb,kerf,minOffcut,stagger),'zagen');
-if(gypsum)plateSection(card,'Gips',plateLayout(width,height,num('w-gyp-length'),num('w-gyp-width'),$('w-gyp-direction').value,0,minOffcut,stagger),'snijden');
+if(osb!=='none')plateSection(card,'OSB',plateLayout(width,height,num('w-osb-length'),num('w-osb-width'),osb,kerf,minOffcut,stagger,num('w-osb-start')),'zagen');
+if(gypsum)plateSection(card,'Gips',plateLayout(width,height,num('w-gyp-length'),num('w-gyp-width'),$('w-gyp-direction').value,0,minOffcut,stagger,num('w-gyp-start')),'snijden');
 const cutTitle=document.createElement('h3');cutTitle.textContent='Zaaglijst';cutTitle.style.marginTop='24px';card.append(cutTitle);Object.entries(grouped).sort((a,b)=>Number(b[0])-Number(a[0])).forEach(([length,count])=>line(card,count+' stuks',length+' mm'));
 if(oversize.length){const warn=document.createElement('p');warn.style.color='#a33';warn.textContent='Let op: '+oversize.length+' delen zijn langer dan de gekozen handelslengte. Kies langere handelslengtes of werk verbindingen constructief uit.';card.append(warn)}
 const drawTitle=document.createElement('h3');drawTitle.textContent='Constructietekening (schematisch)';drawTitle.style.marginTop='24px';card.append(drawTitle);

@@ -66,3 +66,5 @@ Versie 0.9.2: staanderhart tweede staander vanaf linker buitenzijde op h.o.h.-ma
 Versie 0.9.4: instelbaar OSB-zaagverlies, minimale reststukmaat, optionele verspringende plaatbanen, reststukhergebruik. Controleer plaatnaden constructief.
 
 Versie 0.9.5: visuele OSB- en gipsplaatindeling met selecteerbare plaatdelen en maatvoering.
+
+Versie 0.9.9: handmatige startstrook OSB/gips. 0 = automatisch; waarde tussen 1 en plaatbreedte voor verschoven verticale naden. Geen extra regels toegevoegd.

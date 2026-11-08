@@ -84,6 +84,8 @@
       <label>Gipsplaatrichting<select id="w-gyp-direction"><option value="vertical">Verticaal</option><option value="horizontal">Horizontaal</option></select></label>
       <label>Gipsplaat lengte (mm)<input id="w-gyp-length" type="number" min="1" value="2600"></label>
       <label>Gipsplaat breedte (mm)<input id="w-gyp-width" type="number" min="1" value="1200"></label>
+      <label>OSB eerste plaatdeel breedte (mm, 0 = automatisch)<input id="w-osb-start" type="number" min="0" step="1" value="0"></label>
+      <label>Gips eerste plaatdeel breedte (mm, 0 = automatisch)<input id="w-gyp-start" type="number" min="0" step="1" value="0"></label>
       <label>Zaagbladverlies OSB (mm)<input id="w-osb-kerf" type="number" min="0" max="15" step="0.5" value="3"></label>
       <label>Minimale reststukzijde (mm)<input id="w-min-offcut" type="number" min="0" max="2000" value="150"></label>
       <label>Plaatnaden verspringen<select id="w-stagger"><option value="none">Nee, rechte banen</option><option value="half">Ja, om en om halve plaat</option></select></label>
@@ -177,7 +179,7 @@ Legplank,564,540,4</textarea>
 </main>
 <footer><span>KlusMaat · Testversie 0.1</span><span>Gemaakt om verder uit te bouwen</span></footer>
 <div id="toast" role="status" aria-live="polite"></div>
-<script src="app.js?v=098"></script>
-<script src="wall.js?v=098"></script>
+<script src="app.js?v=099"></script>
+<script src="wall.js?v=099"></script>
 </body>
 </html>
