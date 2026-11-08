@@ -50,6 +50,31 @@ function plateSection(parent,label,layout,action){
  line(parent,'Benodigde hele platen',layout.sheets.length+' stuks ('+layout.pw+' × '+layout.ph+' mm)');
  line(parent,'Plaatdelen op maat',layout.pieces.length+' stuks · '+action);
  line(parent,'Hergebruikte reststukken',layout.reused+' stuks');
+ // Visueel vooraanzicht gebaseerd op exact dezelfde plaatdelen als de zaaglijst.
+ const wallW=Math.max(...layout.pieces.map(p=>p.x+p.w),0);
+ const wallH=Math.max(...layout.pieces.map(p=>p.y+p.h),0);
+ if(wallW>0&&wallH>0){
+  const box=document.createElement('div');box.style.cssText='margin:14px 0;padding:12px;border:1px solid #d7e0d9;border-radius:12px;background:#f8faf8';
+  const title=document.createElement('strong');title.textContent='Visuele plaatindeling – vooraanzicht';box.append(title);
+  const note=document.createElement('p');note.className='muted';note.style.fontSize='12px';note.textContent='Tik op een plaatdeel voor positie en zaag-/snijmaat. De tekening is op schaal.';box.append(note);
+  const ns='http://www.w3.org/2000/svg';const make=(tag,attrs)=>{const e=document.createElementNS(ns,tag);Object.entries(attrs).forEach(([k,v])=>e.setAttribute(k,String(v)));return e};
+  const margin=25,viewW=640,scale=Math.min((viewW-2*margin)/wallW,380/wallH),drawW=wallW*scale,drawH=wallH*scale;
+  const svg=make('svg',{viewBox:`0 0 ${Math.ceil(drawW+2*margin)} ${Math.ceil(drawH+2*margin+14)}`,role:'img','aria-label':label+' plaatindeling','preserveAspectRatio':'xMidYMid meet'});svg.style.cssText='display:block;width:100%;max-height:440px;touch-action:pan-y';
+  svg.append(make('rect',{x:margin,y:margin,width:drawW,height:drawH,fill:'#fff',stroke:'#64748b','stroke-width':1.5}));
+  const selection=document.createElement('p');selection.className='muted';selection.style.cssText='min-height:2em;font-size:13px';selection.textContent='Selecteer een plaatdeel.';
+  layout.pieces.forEach((piece,i)=>{
+   const x=margin+piece.x*scale,y=margin+(wallH-piece.y-piece.h)*scale,w=piece.w*scale,h=piece.h*scale;
+   const group=make('g',{tabindex:'0',role:'button','aria-label':`Deel ${i+1}: ${piece.w} bij ${piece.h} millimeter`});group.style.cursor='pointer';
+   group.append(make('rect',{x,y,width:w,height:h,fill:i%2?'#d6e8db':'#e9d8b8',stroke:'#64748b','stroke-width':1}));
+   if(w>24&&h>17){const t=make('text',{x:x+w/2,y:y+h/2,'text-anchor':'middle','dominant-baseline':'middle','font-size':Math.min(13,Math.max(8,w/9)),fill:'#263b32'});t.textContent=String(i+1);group.append(t)}
+   const show=()=>{selection.textContent=`Deel ${i+1} · ${piece.w} × ${piece.h} mm · links ${piece.x} mm · vanaf vloer ${piece.y} mm`;svg.querySelectorAll('g rect').forEach(r=>r.setAttribute('stroke-width','1'));group.querySelector('rect').setAttribute('stroke-width','3')};
+   group.addEventListener('click',show);group.addEventListener('keydown',ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();show()}});svg.append(group);
+  });
+  const bottom=make('text',{x:margin+drawW/2,y:margin+drawH+17,'text-anchor':'middle','font-size':12,fill:'#475569'});bottom.textContent=wallW+' mm';svg.append(bottom);
+  const side=make('text',{x:12,y:margin+drawH/2,'text-anchor':'middle','font-size':11,fill:'#475569',transform:`rotate(-90 12 ${margin+drawH/2})`});side.textContent=wallH+' mm';svg.append(side);
+  box.append(svg,selection);parent.append(box);
+ }
+
  const details=document.createElement('details');details.style.marginTop='10px';const summary=document.createElement('summary');summary.textContent='Bekijk zaag-/snijmaten en plaatsing';details.append(summary);
  const list=document.createElement('div');list.style.cssText='max-height:330px;overflow:auto;margin-top:10px';
  layout.pieces.forEach((p,i)=>line(list,'Deel '+(i+1)+' · vanaf links '+p.x+' / vloer '+p.y+' mm',p.w+' × '+p.h+' mm'));

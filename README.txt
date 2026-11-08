@@ -64,3 +64,5 @@ UPDATE V0.5 - CACHE VERVERSEN
 Versie 0.9.2: staanderhart tweede staander vanaf linker buitenzijde op h.o.h.-maat; eerste/laatste staander tegen wandeinden.
 
 Versie 0.9.4: instelbaar OSB-zaagverlies, minimale reststukmaat, optionele verspringende plaatbanen, reststukhergebruik. Controleer plaatnaden constructief.
+
+Versie 0.9.5: visuele OSB- en gipsplaatindeling met selecteerbare plaatdelen en maatvoering.
