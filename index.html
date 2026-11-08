@@ -30,27 +30,45 @@
 
   <nav class="tabs" aria-label="Hoofdnavigatie">
     <button class="tab active" data-tab="home">Start</button>
+    <button class="tab" data-tab="kasten">Kasten</button>
+    <button class="tab" data-tab="voorzetwanden">Voorzetwanden</button>
     <button class="tab" data-tab="materials">Materialen</button>
-    <button class="tab" data-tab="cabinet">Kastcalculator</button>
-    <button class="tab" data-tab="cutlist">Zaaglijst</button>
-    <button class="tab" data-tab="planner">Plaatplanner</button>
   </nav>
 
   <section id="home" class="panel active">
-    <div class="hero-card">
-      <span class="eyebrow light">KLUSMAAT 0.1</span>
-      <h2>Van kastontwerp naar werkvoorbereiding.</h2>
-      <p>Begin met je materiaalbibliotheek of maak direct een eenvoudige corpusberekening.</p>
-      <button class="button pale" data-go="cabinet">Nieuwe kast berekenen</button>
-    </div>
+    <div class="hero-card"><span class="eyebrow light">KLUSMAAT</span><h2>Wat wil je maken?</h2><p>Kies een vakgebied om te ontwerpen, berekenen en voorbereiden.</p></div>
     <div class="quick-grid">
+      <button class="quick-card" data-go="kasten"><span class="quick-icon">▦</span><b>Kasten</b><small>Calculator, ontwerp, zaaglijst en plaatplanner</small></button>
+      <button class="quick-card" data-go="voorzetwanden"><span class="quick-icon">▤</span><b>Voorzetwanden</b><small>Wanden, plattegrond, elektra en materialen</small></button>
       <button class="quick-card" data-go="materials"><span class="quick-icon">▤</span><b>Materiaalbibliotheek</b><small>Formaten, diktes en prijzen</small></button>
-      <button class="quick-card" data-go="cabinet"><span class="quick-icon">▦</span><b>Kastcalculator</b><small>Corpus en onderdelen</small></button>
-      <button class="quick-card" data-go="cutlist"><span class="quick-icon">⌗</span><b>Zaaglijst</b><small>Onderdelen invoeren</small></button>
-      <button class="quick-card" data-go="materials"><span class="quick-icon">＋</span><b>Eigen materiaal</b><small>Zelf plaatformaten toevoegen</small></button>
     </div>
-    <div class="notice"><b>Goed om te weten</b><p>Dit is versie 0.1. Je gegevens worden op dit apparaat bewaard in de browser. Maak regelmatig een back-up via de exportfunctie bij Materialen.</p></div>
+    <div class="notice"><b>Gegevens bewaren</b><p>Je gegevens worden lokaal op dit apparaat bewaard. Maak regelmatig een back-up via Materialen → Export.</p></div>
   </section>
+
+  <section id="kasten" class="panel">
+    <div class="section-head"><div><p class="eyebrow">VAKGEBIED</p><h2>Kasten</h2></div></div>
+    <div class="quick-grid">
+      <button class="quick-card" data-go="cabinet"><span class="quick-icon">▦</span><b>Calculator / ontwerp</b><small>De bestaande kastcalculator</small></button>
+      <button class="quick-card" data-go="cutlist"><span class="quick-icon">⌗</span><b>Zaaglijst</b><small>Onderdelen en zaagmaten</small></button>
+      <button class="quick-card" data-go="planner"><span class="quick-icon">▤</span><b>Plaatplanner</b><small>Plaatindeling</small></button>
+      <button class="quick-card" data-go="materials"><span class="quick-icon">＋</span><b>Materialen</b><small>Bibliotheek en prijzen</small></button>
+    </div>
+  </section>
+
+  <section id="voorzetwanden" class="panel">
+    <div class="section-head"><div><p class="eyebrow">VAKGEBIED</p><h2>Voorzetwanden</h2></div><span class="pill">In ontwikkeling</span></div>
+    <div class="quick-grid">
+      <button class="quick-card" data-go="wand-calculator"><span class="quick-icon">▦</span><b>Calculator</b><small>Hout, metal stud en isolatie</small></button>
+      <button class="quick-card" data-go="wand-ontwerp"><span class="quick-icon">⌗</span><b>Ontwerp / plattegrond</b><small>Ruimtes en wandindeling</small></button>
+      <button class="quick-card" data-go="wand-elektra"><span class="quick-icon">⚡</span><b>Elektra</b><small>Stroompunten en staanders</small></button>
+      <button class="quick-card" data-go="wand-kosten"><span class="quick-icon">€</span><b>Materialen / kosten</b><small>Bestellijst en begroting</small></button>
+    </div>
+  </section>
+
+  <section id="wand-calculator" class="panel"><div class="section-head"><div><p class="eyebrow">VOORZETWANDEN</p><h2>Calculator</h2></div></div><div class="card"><p>Deze module wordt als volgende uitgewerkt: hout- en profielmaten, isolatie, OSB en gips, hoeveelheden en zaaglijst.</p><button class="button outline" data-go="voorzetwanden">Terug naar Voorzetwanden</button></div></section>
+  <section id="wand-ontwerp" class="panel"><div class="section-head"><div><p class="eyebrow">VOORZETWANDEN</p><h2>Ontwerp / plattegrond</h2></div></div><div class="card"><p>Gepland: meerdere ruimtes en wanden, automatisch tekenen of zelf tekenen, deuren, ramen en constructietekeningen.</p><button class="button outline" data-go="voorzetwanden">Terug naar Voorzetwanden</button></div></section>
+  <section id="wand-elektra" class="panel"><div class="section-head"><div><p class="eyebrow">VOORZETWANDEN</p><h2>Elektra</h2></div></div><div class="card"><p>Gepland: stopcontacten, schakelaars, leidingroutes en controle op de positie van staanders.</p><button class="button outline" data-go="voorzetwanden">Terug naar Voorzetwanden</button></div></section>
+  <section id="wand-kosten" class="panel"><div class="section-head"><div><p class="eyebrow">VOORZETWANDEN</p><h2>Materialen / kosten</h2></div></div><div class="card"><p>Gepland: materiaalstaat per wand, ruimte en project, eigen prijzen, opslag, btw en PDF-export.</p><button class="button outline" data-go="voorzetwanden">Terug naar Voorzetwanden</button></div></section>
 
   <section id="materials" class="panel">
     <div class="section-head"><div><p class="eyebrow">BIBLIOTHEEK</p><h2>Materialen</h2></div><span class="pill">Lokaal opgeslagen</span></div>
