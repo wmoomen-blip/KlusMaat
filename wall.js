@@ -20,7 +20,9 @@ const line=(card,name,value)=>{const div=document.createElement('div');div.class
 
 // Praktische rechthoekige plaatindeling: per baan, met hergebruik van reststukken.
 // Geen automatische verstevigingen. Dit is een zaag-/snijvoorstel, geen constructieve vrijgave.
-function plateLayout(wallW,wallH,plateL,plateW,direction,kerf,minOffcut,stagger,startWidth){
+// Naadposities per materiaal en baan, alleen in geheugen gedurende deze sessie.
+const seamOverrides={OSB:{},Gips:{}};
+function plateLayout(wallW,wallH,plateL,plateW,direction,kerf,minOffcut,stagger,startWidth,overrides){
  const pw=direction==='horizontal'?plateL:plateW,ph=direction==='horizontal'?plateW:plateL;
  const pieces=[];
  for(let y=0,row=0;y<wallH;y+=ph,row++){
@@ -30,7 +32,14 @@ function plateLayout(wallW,wallH,plateL,plateW,direction,kerf,minOffcut,stagger,
   const custom=Number(startWidth)>0&&Number(startWidth)<pw;
   const firstWidth=stagger==='half'&&row%2===1?pw/2:(custom?Number(startWidth):0);
   if(firstWidth>0){const first=Math.min(wallW,firstWidth);pieces.push({x:0,y,w:first,h:Math.min(ph,wallH-y)});x=first}
-  while(x<wallW){const w=Math.min(pw,wallW-x);pieces.push({x,y,w,h:Math.min(ph,wallH-y)});x+=w;
+  let seamIndex=firstWidth>0?1:0;
+  while(x<wallW){
+   const defaultEnd=Math.min(wallW,x+pw);
+   const edited=overrides&&overrides[row]&&overrides[row][seamIndex];
+   // Een aangepaste naad mag niet buiten de plaatmaat of wand vallen.
+   const target=Number(edited);
+   const end=Number.isFinite(target)&&target>x+20&&target<=Math.min(wallW,x+pw)?target:defaultEnd;
+   const w=end-x;pieces.push({x,y,w,h:Math.min(ph,wallH-y)});x=end;seamIndex++;
    if(pieces.length>2500)return {error:'Te veel plaatdelen voor deze berekening.'};}
  }
  const sheets=[],offcuts=[];let reused=0;
@@ -48,7 +57,7 @@ function plateLayout(wallW,wallH,plateL,plateW,direction,kerf,minOffcut,stagger,
  }
  return {pieces,sheets,offcuts,pw,ph,reused,kerf,stagger};
 }
-function plateSection(parent,label,layout,action){
+function plateSection(parent,label,layout,action,onEdit){
  const heading=document.createElement('h3');heading.textContent=label+' – plaatindeling';heading.style.marginTop='24px';parent.append(heading);
  if(layout.error){const p=document.createElement('p');p.textContent=layout.error;parent.append(p);return}
  line(parent,'Benodigde hele platen',layout.sheets.length+' stuks ('+layout.pw+' × '+layout.ph+' mm)');
@@ -79,6 +88,28 @@ function plateSection(parent,label,layout,action){
   box.append(svg,selection);parent.append(box);
  }
 
+ // Naad per baan aanpassen. Deze besturing staat buiten de SVG, zodat tikken op
+ // plaatdelen en de oorspronkelijke tekening ongewijzigd blijven werken.
+ const seams=document.createElement('details');seams.style.marginTop='12px';
+ const seamsTitle=document.createElement('summary');seamsTitle.textContent='Plaatnaden afzonderlijk aanpassen';seams.append(seamsTitle);
+ const hint=document.createElement('p');hint.className='muted';hint.textContent='Kies een baan en verander de positie van een verticale naad, gemeten vanaf links. De maximale breedte van het voorafgaande plaatdeel blijft de plaatmaat. Gebruik Herstellen voor de automatische indeling.';seams.append(hint);
+ const rows=[...new Set(layout.pieces.map(p=>p.y))].sort((a,b)=>a-b);
+ let count=0;
+ rows.forEach((y,row)=>{
+  const parts=layout.pieces.filter(p=>p.y===y).sort((a,b)=>a.x-b.x);
+  parts.slice(0,-1).forEach((piece,index)=>{
+   if(++count>150)return;
+   const end=piece.x+piece.w;
+   const wrap=document.createElement('label');wrap.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:8px;margin:8px 0;flex-wrap:wrap';
+   const name=document.createElement('span');name.textContent='Baan '+(row+1)+' · naad '+(index+1)+' (mm vanaf links)';
+   const input=document.createElement('input');input.type='number';input.step='1';input.min=String(Math.ceil(piece.x+21));input.max=String(Math.floor(Math.min(layout.pw+piece.x,wallW)));
+   input.value=String(Math.round(end));input.style.width='110px';
+   input.addEventListener('change',()=>{const v=Number(input.value);if(!Number.isFinite(v)||v<=piece.x+20||v>Math.min(layout.pw+piece.x,wallW)){input.value=String(Math.round(end));return}onEdit(row,index,v)});
+   wrap.append(name,input);seams.append(wrap);
+  });
+ });
+ const reset=document.createElement('button');reset.type='button';reset.className='button small outline';reset.textContent='Alle naden van '+label+' herstellen';reset.addEventListener('click',()=>onEdit(null,null,null));seams.append(reset);
+ parent.append(seams);
  const details=document.createElement('details');details.style.marginTop='10px';const summary=document.createElement('summary');summary.textContent='Bekijk zaag-/snijmaten en plaatsing';details.append(summary);
  const list=document.createElement('div');list.style.cssText='max-height:330px;overflow:auto;margin-top:10px';
  layout.pieces.forEach((p,i)=>line(list,'Deel '+(i+1)+' · vanaf links '+p.x+' / vloer '+p.y+' mm',p.w+' × '+p.h+' mm'));
@@ -87,6 +118,12 @@ function plateSection(parent,label,layout,action){
  const info=document.createElement('p');info.className='muted';info.textContent='Niet benut oppervlak circa '+((total-used)/1e6).toFixed(2)+' m² (inclusief snij-/zaagverlies en niet bruikbare stroken). '+(layout.kerf?'Zaagverlies '+layout.kerf+' mm per snede. ':'')+(layout.stagger==='half'?'Afwisselend halve plaat als startdeel. ':'')+'Let op: de voorgestelde naden zijn niet automatisch constructief ondersteund. Controleer staanders, plaatranden, tand-en-groef en bevestiging.';parent.append(info);
 }
 
+function editSeam(material,row,index,value){
+ if(row===null){seamOverrides[material]={};calculate();return}
+ if(!seamOverrides[material][row])seamOverrides[material][row]={};
+ seamOverrides[material][row][index]=value;
+ calculate();
+}
 $('w-calculate').addEventListener('click',calculate);
 function calculate(){
 const width=num('w-width'),height=num('w-height'),spacing=num('w-spacing'),stock=num('w-stock'),waste=num('w-waste');
@@ -128,8 +165,8 @@ line(card,'Totale regellengte',(total/1000).toFixed(2)+' m');line(card,'Handelsl
 if(ins!=='none')line(card,'Isolatie '+ins,(area*extra).toFixed(2)+' m², '+num('w-ins-thickness')+' mm');
 if(osb!=='none')line(card,'OSB (oppervlakte-indicatie, zagen mogelijk)',ceil(area*extra,num('w-osb-length')*num('w-osb-width')/1e6)+' platen');
 if(gypsum)line(card,'Gips (oppervlakte-indicatie, snijden mogelijk)',ceil(area*extra,num('w-gyp-length')*num('w-gyp-width')/1e6)+' platen');
-if(osb!=='none')plateSection(card,'OSB',plateLayout(width,height,num('w-osb-length'),num('w-osb-width'),osb,kerf,minOffcut,stagger,num('w-osb-start')),'zagen');
-if(gypsum)plateSection(card,'Gips',plateLayout(width,height,num('w-gyp-length'),num('w-gyp-width'),$('w-gyp-direction').value,0,minOffcut,stagger,num('w-gyp-start')),'snijden');
+if(osb!=='none')plateSection(card,'OSB',plateLayout(width,height,num('w-osb-length'),num('w-osb-width'),osb,kerf,minOffcut,stagger,num('w-osb-start'),seamOverrides.OSB),'zagen',(row,index,value)=>editSeam('OSB',row,index,value));
+if(gypsum)plateSection(card,'Gips',plateLayout(width,height,num('w-gyp-length'),num('w-gyp-width'),$('w-gyp-direction').value,0,minOffcut,stagger,num('w-gyp-start'),seamOverrides.Gips),'snijden',(row,index,value)=>editSeam('Gips',row,index,value));
 const cutTitle=document.createElement('h3');cutTitle.textContent='Zaaglijst';cutTitle.style.marginTop='24px';card.append(cutTitle);Object.entries(grouped).sort((a,b)=>Number(b[0])-Number(a[0])).forEach(([length,count])=>line(card,count+' stuks',length+' mm'));
 if(oversize.length){const warn=document.createElement('p');warn.style.color='#a33';warn.textContent='Let op: '+oversize.length+' delen zijn langer dan de gekozen handelslengte. Kies langere handelslengtes of werk verbindingen constructief uit.';card.append(warn)}
 const drawTitle=document.createElement('h3');drawTitle.textContent='Constructietekening (schematisch)';drawTitle.style.marginTop='24px';card.append(drawTitle);
