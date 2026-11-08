@@ -70,7 +70,8 @@
     <div class="card form-grid" id="wall-form">
       <label>Breedte wand (mm)<input id="w-width" type="number" min="1" value="4000"></label>
       <label>Hoogte wand (mm)<input id="w-height" type="number" min="1" value="2600"></label>
-      <label>Constructie<select id="w-type"><option value="wood">Houten regelwerk</option><option value="metal">Metal stud</option></select></label>
+      <label class="full">Constructiemethode<select id="w-method"><option value="between">Doorlopende boven- en onderregel (standaard)</option><option value="continuous">Doorlopende staanders, regels ertussen</option></select></label>
+        <label>Constructie<select id="w-type"><option value="wood">Houten regelwerk</option><option value="metal">Metal stud</option></select></label>
       <label>Profiel / houtmaat<select id="w-profile"></select></label>
       <label>Hart-op-hart (mm)<select id="w-spacing"><option>300</option><option>400</option><option selected>600</option></select></label>
       <label>Handelslengte regels / profielen (mm)<input id="w-stock" type="number" min="1" value="3000"></label>
