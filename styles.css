@@ -2,3 +2,6 @@
 .cut-sequence{padding-left:20px;font-size:12px;line-height:1.55;color:var(--ink)}.cut-sequence li{margin:5px 0}#plan-result svg text{font-family:system-ui,sans-serif}.panel#planner .notice{margin-top:14px}
 
 #cabinet-result .notice{margin-top:14px}#cabinet-result small{color:var(--muted);font-weight:400;line-height:1.4}
+
+/* Duidelijke scheiding van materiaalkeuzes in de voorzetwandcalculator */
+.wall-group-heading{grid-column:1/-1;font-weight:750;font-size:1rem;color:#1f4938;border-bottom:2px solid #a9c9b4;padding:18px 0 7px;margin-top:5px;}
