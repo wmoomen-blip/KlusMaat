@@ -70,38 +70,49 @@ function addDrawingDownload(parent,svg,name,details=[]){
    clone.setAttribute('xmlns','http://www.w3.org/2000/svg');
    const vb=svg.viewBox.baseVal;
    const w=Math.max(1,vb.width||340),h=Math.max(1,vb.height||230);
-   // Add a printable dimensioned schedule below the exported drawing.
-   // The interactive drawing itself stays unchanged.
-   const ns='http://www.w3.org/2000/svg';
+   // Render the drawing first, then draw the cutting schedule directly on the PNG
+   // canvas. This avoids SVG viewBox clipping of text below the original drawing.
    const lines=details.map(item=>String(item));
-   const columns=lines.length>22?2:1;
-   const rows=Math.ceil(lines.length/columns);
-   const fontSize=Math.max(10,Math.min(14,w/43));
-   const lineHeight=fontSize*1.65;
-   const footerHeight=lines.length?42+rows*lineHeight+20:0;
-   const exportW=Math.max(w,columns===2?580:410);
-   const extraX=(exportW-w)/2;
-   const exportH=h+footerHeight;
-   clone.setAttribute('viewBox',`0 0 ${exportW} ${exportH}`);
-   clone.setAttribute('width',String(exportW));clone.setAttribute('height',String(exportH));
-   if(lines.length){
-    const makeText=(value,x,y,size,weight)=>{const t=document.createElementNS(ns,'text');t.setAttribute('x',String(x));t.setAttribute('y',String(y));t.setAttribute('font-family','Arial, sans-serif');t.setAttribute('font-size',String(size));t.setAttribute('fill','#172b22');if(weight)t.setAttribute('font-weight',weight);t.textContent=value;return t};
-    const heading=name==='constructie'?'Constructie – maatvoering en zaaglijst':'Plaatindeling – maatvoering en zaag-/snijlijst';
-    clone.append(makeText(heading,18,h+27,fontSize+2,'bold'));
-    const split=Math.ceil(lines.length/columns);
-    lines.forEach((item,i)=>{const col=Math.floor(i/split),row=i%split;clone.append(makeText(item,18+col*(exportW/2),h+48+row*lineHeight,fontSize))});
-   }
-
+   const ns='http://www.w3.org/2000/svg';
+   const sourceW=Math.max(1,svg.viewBox.baseVal.width||340);
+   const sourceH=Math.max(1,svg.viewBox.baseVal.height||230);
+   clone.setAttribute('viewBox',`0 0 ${sourceW} ${sourceH}`);
+   clone.setAttribute('width',String(sourceW));clone.setAttribute('height',String(sourceH));
    const xml=new XMLSerializer().serializeToString(clone);
    const blob=new Blob([xml],{type:'image/svg+xml;charset=utf-8'});
    url=URL.createObjectURL(blob);
    const img=new Image();
    await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=()=>reject(new Error('SVG niet geladen'));img.src=url});
-   const scale=Math.min(4,Math.max(2,2200/exportW));
-   const canvas=document.createElement('canvas');canvas.width=Math.ceil(exportW*scale);canvas.height=Math.ceil(exportH*scale);
+   const pixelW=1800;
+   const padding=60;
+   const fontSize=34;
+   const lineHeight=52;
+   const columns=lines.length>30?2:1;
+   const rows=Math.ceil(lines.length/columns);
+   const drawW=pixelW-2*padding;
+   const drawH=Math.ceil(drawW*sourceH/sourceW);
+   const footerTop=padding+drawH+70;
+   const footerHeight=lines.length?130+rows*lineHeight+70:0;
+   const canvas=document.createElement('canvas');
+   canvas.width=pixelW;
+   canvas.height=padding+drawH+footerHeight+padding;
    const ctx=canvas.getContext('2d');if(!ctx)throw new Error('Canvas niet beschikbaar');
    ctx.fillStyle='#ffffff';ctx.fillRect(0,0,canvas.width,canvas.height);
-   ctx.drawImage(img,0,0,canvas.width,canvas.height);
+   ctx.drawImage(img,padding,padding,drawW,drawH);
+   if(lines.length){
+    ctx.fillStyle='#172b22';
+    ctx.strokeStyle='#b9c7bf';ctx.lineWidth=2;
+    ctx.beginPath();ctx.moveTo(padding,footerTop-30);ctx.lineTo(pixelW-padding,footerTop-30);ctx.stroke();
+    ctx.font='bold 43px Arial, sans-serif';
+    ctx.fillText(name==='constructie'?'CONSTRUCTIE – MAATVOERING EN ZAAGLIJST':name.toUpperCase().replace('-PLAATINDELING','')+' – PLAATMATEN EN ZAAG-/SNIJLIJST',padding,footerTop);
+    ctx.font=fontSize+'px Arial, sans-serif';
+    const split=Math.ceil(lines.length/columns);
+    lines.forEach((item,i)=>{
+      const col=Math.floor(i/split),row=i%split;
+      const x=padding+col*(pixelW/2),y=footerTop+65+row*lineHeight;
+      ctx.fillText(item,x,y,pixelW/columns-padding*2);
+    });
+   }
    const png=await new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(new Error('PNG kon niet worden gemaakt')),'image/png'));
    const link=document.createElement('a');link.href=URL.createObjectURL(png);link.download='KlusMaat-'+name+'.png';
    document.body.append(link);link.click();link.remove();
