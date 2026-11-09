@@ -22,6 +22,7 @@ const line=(card,name,value)=>{const div=document.createElement('div');div.class
 // Geen automatische verstevigingen. Dit is een zaag-/snijvoorstel, geen constructieve vrijgave.
 // Naadposities per materiaal en baan, alleen in geheugen gedurende deze sessie.
 const seamOverrides={OSB:{},Gips:{}};
+const seamPanelOpen={OSB:false,Gips:false};
 function plateLayout(wallW,wallH,plateL,plateW,direction,kerf,minOffcut,stagger,startWidth,overrides){
  const pw=direction==='horizontal'?plateL:plateW,ph=direction==='horizontal'?plateW:plateL;
  const pieces=[];
@@ -31,14 +32,12 @@ function plateLayout(wallW,wallH,plateL,plateW,direction,kerf,minOffcut,stagger,
   // Bij verspringing blijft iedere tweede baan beginnen met een halve plaat.
   const custom=Number(startWidth)>0&&Number(startWidth)<pw;
   const firstWidth=stagger==='half'&&row%2===1?pw/2:(custom?Number(startWidth):0);
-  if(firstWidth>0){const first=Math.min(wallW,firstWidth);pieces.push({x:0,y,w:first,h:Math.min(ph,wallH-y)});x=first}
-  let seamIndex=firstWidth>0?1:0;
+  let seamIndex=0;
   while(x<wallW){
-   const defaultEnd=Math.min(wallW,x+pw);
+   const defaultEnd=Math.min(wallW,x+(seamIndex===0&&firstWidth>0?firstWidth:pw));
    const edited=overrides&&overrides[row]&&overrides[row][seamIndex];
-   // Een aangepaste naad mag niet buiten de plaatmaat of wand vallen.
    const target=Number(edited);
-   const end=Number.isFinite(target)&&target>x+20&&target<=Math.min(wallW,x+pw)?target:defaultEnd;
+   const end=edited!==undefined&&Number.isFinite(target)&&target>x+20&&target<=Math.min(wallW,x+pw)?target:defaultEnd;
    const w=end-x;pieces.push({x,y,w,h:Math.min(ph,wallH-y)});x=end;seamIndex++;
    if(pieces.length>2500)return {error:'Te veel plaatdelen voor deze berekening.'};}
  }
@@ -90,7 +89,7 @@ function plateSection(parent,label,layout,action,onEdit){
 
  // Naad per baan aanpassen. Deze besturing staat buiten de SVG, zodat tikken op
  // plaatdelen en de oorspronkelijke tekening ongewijzigd blijven werken.
- const seams=document.createElement('details');seams.style.marginTop='12px';
+ const seams=document.createElement('details');seams.open=seamPanelOpen[label]===true;seams.addEventListener('toggle',()=>{seamPanelOpen[label]=seams.open});seams.style.marginTop='12px';
  const seamsTitle=document.createElement('summary');seamsTitle.textContent='Plaatnaden afzonderlijk aanpassen';seams.append(seamsTitle);
  const hint=document.createElement('p');hint.className='muted';hint.textContent='Kies een baan en verander de positie van een verticale naad, gemeten vanaf links. De maximale breedte van het voorafgaande plaatdeel blijft de plaatmaat. Gebruik Herstellen voor de automatische indeling.';seams.append(hint);
  const rows=[...new Set(layout.pieces.map(p=>p.y))].sort((a,b)=>a-b);
@@ -104,7 +103,7 @@ function plateSection(parent,label,layout,action,onEdit){
    const name=document.createElement('span');name.textContent='Baan '+(row+1)+' · naad '+(index+1)+' (mm vanaf links)';
    const input=document.createElement('input');input.type='number';input.step='1';input.min=String(Math.ceil(piece.x+21));input.max=String(Math.floor(Math.min(layout.pw+piece.x,wallW)));
    input.value=String(Math.round(end));input.style.width='110px';
-   input.addEventListener('change',()=>{const v=Number(input.value);if(!Number.isFinite(v)||v<=piece.x+20||v>Math.min(layout.pw+piece.x,wallW)){input.value=String(Math.round(end));return}onEdit(row,index,v)});
+   input.addEventListener('change',()=>{seamPanelOpen[label]=true;const v=Number(input.value);if(!Number.isFinite(v)||v<=piece.x+20||v>Math.min(layout.pw+piece.x,wallW)){input.value=String(Math.round(end));return}onEdit(row,index,v)});
    wrap.append(name,input);seams.append(wrap);
   });
  });
@@ -119,9 +118,10 @@ function plateSection(parent,label,layout,action,onEdit){
 }
 
 function editSeam(material,row,index,value){
- if(row===null){seamOverrides[material]={};calculate();return}
+ if(row===null){seamOverrides[material]={};seamPanelOpen[material]=true;calculate();return}
  if(!seamOverrides[material][row])seamOverrides[material][row]={};
  seamOverrides[material][row][index]=value;
+ seamPanelOpen[material]=true;
  calculate();
 }
 $('w-calculate').addEventListener('click',calculate);
