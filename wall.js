@@ -180,8 +180,22 @@ line(card,'Totale regellengte',(total/1000).toFixed(2)+' m');line(card,'Handelsl
 if(ins!=='none')line(card,'Isolatie '+ins,(area*extra).toFixed(2)+' m², '+num('w-ins-thickness')+' mm');
 if(osb!=='none')line(card,'OSB (oppervlakte-indicatie, zagen mogelijk)',ceil(area*extra,num('w-osb-length')*num('w-osb-width')/1e6)+' platen');
 if(gypsum)line(card,'Gips (oppervlakte-indicatie, snijden mogelijk)',ceil(area*extra,num('w-gyp-length')*num('w-gyp-width')/1e6)+' platen');
-if(osb!=='none')plateSection(card,'OSB',plateLayout(width,height,num('w-osb-length'),num('w-osb-width'),osb,kerf,minOffcut,stagger,num('w-osb-start'),seamOverrides.OSB),'zagen',(row,index,value)=>editSeam('OSB',row,index,value));
-if(gypsum)plateSection(card,'Gips',plateLayout(width,height,num('w-gyp-length'),num('w-gyp-width'),$('w-gyp-direction').value,0,minOffcut,stagger,num('w-gyp-start'),seamOverrides.Gips),'snijden',(row,index,value)=>editSeam('Gips',row,index,value));
+const osbLayout=osb!=='none'?plateLayout(width,height,num('w-osb-length'),num('w-osb-width'),osb,kerf,minOffcut,stagger,num('w-osb-start'),seamOverrides.OSB):null;
+if(osbLayout)plateSection(card,'OSB',osbLayout,'zagen',(row,index,value)=>editSeam('OSB',row,index,value));
+const gypLayout=gypsum?plateLayout(width,height,num('w-gyp-length'),num('w-gyp-width'),$('w-gyp-direction').value,0,minOffcut,stagger,num('w-gyp-start'),seamOverrides.Gips):null;
+if(gypLayout)plateSection(card,'Gips',gypLayout,'snijden',(row,index,value)=>editSeam('Gips',row,index,value));
+// Bestellijst gebaseerd op de daadwerkelijke zaag- en plaatindeling.
+const orderTitle=document.createElement('h3');orderTitle.textContent='Bestellijst';orderTitle.style.marginTop='24px';card.append(orderTitle);
+const orderLines=['KLUSMAAT – BESTELLIJST','Wand: '+width+' × '+height+' mm',''];
+const addOrder=(name,quantity,unit,detail)=>{line(card,name,quantity+' '+unit+(detail?' · '+detail:''));orderLines.push(name+': '+quantity+' '+unit+(detail?' ('+detail+')':''))};
+addOrder(isWood?'Houten regels '+profile.value+' mm':'Metal stud '+profile.value+' mm',bins.length,'stuks','handelslengte '+stock+' mm');
+if(oversize.length)orderLines.push('LET OP: '+oversize.length+' zaagdelen passen niet in de handelslengte');
+const reserveFactor=1+waste/100;
+if(osbLayout&&!osbLayout.error)addOrder('OSB',Math.ceil(osbLayout.sheets.length*reserveFactor),'platen',num('w-osb-length')+' × '+num('w-osb-width')+' mm');
+if(gypLayout&&!gypLayout.error)addOrder('Gips',Math.ceil(gypLayout.sheets.length*reserveFactor),'platen',num('w-gyp-length')+' × '+num('w-gyp-width')+' mm');
+if(ins!=='none')addOrder('Isolatie '+ins,Math.ceil(area*reserveFactor*100)/100,'m²',num('w-ins-thickness')+' mm dik');
+const orderNote=document.createElement('p');orderNote.className='muted';orderNote.textContent='Platen en isolatie zijn inclusief de ingestelde '+waste+'% reserve, afgerond naar hele platen. Regels zijn gebaseerd op de bestaande zaagindeling zonder extra reserve; bevestigingsmiddelen en profielen zijn nog niet meegenomen. Controleer de aantallen voor bestelling.';card.append(orderNote);
+const copyOrder=document.createElement('button');copyOrder.type='button';copyOrder.className='button small';copyOrder.textContent='Bestellijst kopiëren';copyOrder.addEventListener('click',async()=>{const content=orderLines.join('\n');try{await navigator.clipboard.writeText(content);copyOrder.textContent='Gekopieerd';}catch{const field=document.createElement('textarea');field.value=content;field.style.cssText='width:100%;height:150px';card.insertBefore(field,copyOrder.nextSibling);field.select();copyOrder.textContent='Selecteer en kopieer de tekst';}});card.append(copyOrder);
 const cutTitle=document.createElement('h3');cutTitle.textContent='Zaaglijst';cutTitle.style.marginTop='24px';card.append(cutTitle);Object.entries(grouped).sort((a,b)=>Number(b[0])-Number(a[0])).forEach(([length,count])=>line(card,count+' stuks',length+' mm'));
 if(between&&railCuts.length>1&&!railSplitWarning){const note=document.createElement('p');note.className='muted';note.textContent='De boven- en onderregel zijn opgedeeld in handelslengtes, met naden ter plaatse van staanders. Verbind de naden constructief correct; niet elke aansluiting is zonder meer geschikt als dragende verbinding.';card.append(note)}
 if(railSplitWarning){const note=document.createElement('p');note.style.color='#a33';note.textContent=railSplitWarning;card.append(note)}
