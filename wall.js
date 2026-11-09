@@ -89,7 +89,7 @@ function plateSection(parent,label,layout,action,onEdit){
 
  // Naad per baan aanpassen. Deze besturing staat buiten de SVG, zodat tikken op
  // plaatdelen en de oorspronkelijke tekening ongewijzigd blijven werken.
- const seams=document.createElement('details');seams.open=seamPanelOpen[label]===true;seams.addEventListener('toggle',()=>{seamPanelOpen[label]=seams.open});seams.style.marginTop='12px';
+ const seams=document.createElement('details');seams.open=seamPanelOpen[label]===true;seams.addEventListener('toggle',()=>{if(seams.isConnected)seamPanelOpen[label]=seams.open});seams.style.marginTop='12px';
  const seamsTitle=document.createElement('summary');seamsTitle.textContent='Plaatnaden afzonderlijk aanpassen';seams.append(seamsTitle);
  const hint=document.createElement('p');hint.className='muted';hint.textContent='Kies een baan en verander de positie van een verticale naad, gemeten vanaf links. De maximale breedte van het voorafgaande plaatdeel blijft de plaatmaat. Gebruik Herstellen voor de automatische indeling.';seams.append(hint);
  const rows=[...new Set(layout.pieces.map(p=>p.y))].sort((a,b)=>a-b);
@@ -103,8 +103,10 @@ function plateSection(parent,label,layout,action,onEdit){
    const name=document.createElement('span');name.textContent='Baan '+(row+1)+' · naad '+(index+1)+' (mm vanaf links)';
    const input=document.createElement('input');input.type='number';input.step='1';input.min=String(Math.ceil(piece.x+21));input.max=String(Math.floor(Math.min(layout.pw+piece.x,wallW)));
    input.value=String(Math.round(end));input.style.width='110px';
-   input.addEventListener('change',()=>{seamPanelOpen[label]=true;const v=Number(input.value);if(!Number.isFinite(v)||v<=piece.x+20||v>Math.min(layout.pw+piece.x,wallW)){input.value=String(Math.round(end));return}onEdit(row,index,v)});
-   wrap.append(name,input);seams.append(wrap);
+   const apply=document.createElement('button');apply.type='button';apply.className='button small';apply.textContent='Toepassen';
+   const applyEdit=()=>{const v=Number(input.value);if(input.value.trim()===''||!Number.isFinite(v)||v<=piece.x+20||v>Math.min(layout.pw+piece.x,wallW)){input.setCustomValidity('Vul een naadpositie in tussen '+Math.ceil(piece.x+21)+' en '+Math.floor(Math.min(layout.pw+piece.x,wallW))+' mm');input.reportValidity();return}input.setCustomValidity('');seamPanelOpen[label]=true;onEdit(row,index,v)};
+   apply.addEventListener('click',applyEdit);input.addEventListener('keydown',ev=>{if(ev.key==='Enter'){ev.preventDefault();applyEdit()}});
+   wrap.append(name,input,apply);seams.append(wrap);
   });
  });
  const reset=document.createElement('button');reset.type='button';reset.className='button small outline';reset.textContent='Alle naden van '+label+' herstellen';reset.addEventListener('click',()=>onEdit(null,null,null));seams.append(reset);
@@ -147,7 +149,20 @@ const clearWidth=width-(isWood?cross:0),segmentLengths=positions.slice(1).map((x
 // Plaatnaden leiden niet tot extra regels: platen mogen op maat worden gezaagd/gesneden.
 const seamHeights=[];
 const nogginCuts=[];
-const cuts=between?[...Array(studs).fill(studLength),width,width,...nogginCuts]:[...Array(studs).fill(height),...segmentLengths,...segmentLengths,...nogginCuts];
+// Deel doorlopende boven- en onderregels uitsluitend op ter plaatse van een staander.
+// Een stuiknaad boven een staander moet constructief correct worden verbonden.
+const railCuts=[];let railSplitWarning='';
+if(between&&width>stock){
+ let start=0;
+ while(start<width-0.001){
+  if(width-start<=stock){railCuts.push(width-start);break}
+  const candidates=positions.filter(c=>c>start+1&&c-start<=stock);
+  const next=candidates.length?candidates[candidates.length-1]:null;
+  if(next===null){railSplitWarning='De gekozen handelslengte is te kort om de horizontale regels op een staander te laten aansluiten. Kies een langere handelslengte of pas de constructie aan.';railCuts.push(width-start);break}
+  railCuts.push(next-start);start=next;
+ }
+}else if(between)railCuts.push(width);
+const cuts=between?[...Array(studs).fill(studLength),...railCuts,...railCuts,...nogginCuts]:[...Array(studs).fill(height),...segmentLengths,...segmentLengths,...nogginCuts];
 const total=cuts.reduce((a,b)=>a+b,0),extra=1+waste/100;
 const grouped={};cuts.forEach(x=>{grouped[x]=(grouped[x]||0)+1});
 // First-fit decreasing: every individual cut must fit in a stock length.
@@ -160,7 +175,7 @@ const kerf=num('w-osb-kerf'),minOffcut=num('w-min-offcut'),stagger=$('w-stagger'
 if(!Number.isFinite(kerf)||kerf<0||kerf>15||!Number.isFinite(minOffcut)||minOffcut<0){el.textContent='Controleer zaagverlies en reststukmaat.';return}
 const area=width*height/1e6,osb=$('w-osb').value,gypsum=$('w-gypsum').value==='yes',ins=$('w-insulation').value;
 const card=document.createElement('div');card.className='card';const h=document.createElement('h3');h.textContent='Materiaallijst – '+profile.value+' mm';card.append(h);
-line(card,'Oppervlakte wand',area.toFixed(2)+' m²');line(card,'Staanders',studs+' × '+studLength+' mm');line(card,'Staanderharten vanaf links',positions.map(x=>Math.round(x)).join(' / ')+' mm');line(card,'Horizontale regels',between?'2 × '+width+' mm':segmentLengths.length+' vakken boven en onder');
+line(card,'Oppervlakte wand',area.toFixed(2)+' m²');line(card,'Staanders',studs+' × '+studLength+' mm');line(card,'Staanderharten vanaf links',positions.map(x=>Math.round(x)).join(' / ')+' mm');line(card,'Horizontale regels',between?railCuts.length+' delen per regel (boven en onder)':segmentLengths.length+' vakken boven en onder');
 line(card,'Totale regellengte',(total/1000).toFixed(2)+' m');line(card,'Handelslengtes (zaagindeling)',bins.length+' × '+stock+' mm'+(waste?' + '+waste+'% reserve (zelf toevoegen)':''));
 if(ins!=='none')line(card,'Isolatie '+ins,(area*extra).toFixed(2)+' m², '+num('w-ins-thickness')+' mm');
 if(osb!=='none')line(card,'OSB (oppervlakte-indicatie, zagen mogelijk)',ceil(area*extra,num('w-osb-length')*num('w-osb-width')/1e6)+' platen');
@@ -168,7 +183,9 @@ if(gypsum)line(card,'Gips (oppervlakte-indicatie, snijden mogelijk)',ceil(area*e
 if(osb!=='none')plateSection(card,'OSB',plateLayout(width,height,num('w-osb-length'),num('w-osb-width'),osb,kerf,minOffcut,stagger,num('w-osb-start'),seamOverrides.OSB),'zagen',(row,index,value)=>editSeam('OSB',row,index,value));
 if(gypsum)plateSection(card,'Gips',plateLayout(width,height,num('w-gyp-length'),num('w-gyp-width'),$('w-gyp-direction').value,0,minOffcut,stagger,num('w-gyp-start'),seamOverrides.Gips),'snijden',(row,index,value)=>editSeam('Gips',row,index,value));
 const cutTitle=document.createElement('h3');cutTitle.textContent='Zaaglijst';cutTitle.style.marginTop='24px';card.append(cutTitle);Object.entries(grouped).sort((a,b)=>Number(b[0])-Number(a[0])).forEach(([length,count])=>line(card,count+' stuks',length+' mm'));
-if(oversize.length){const warn=document.createElement('p');warn.style.color='#a33';warn.textContent='Let op: '+oversize.length+' delen zijn langer dan de gekozen handelslengte. Kies langere handelslengtes of werk verbindingen constructief uit.';card.append(warn)}
+if(between&&railCuts.length>1&&!railSplitWarning){const note=document.createElement('p');note.className='muted';note.textContent='De boven- en onderregel zijn opgedeeld in handelslengtes, met naden ter plaatse van staanders. Verbind de naden constructief correct; niet elke aansluiting is zonder meer geschikt als dragende verbinding.';card.append(note)}
+if(railSplitWarning){const note=document.createElement('p');note.style.color='#a33';note.textContent=railSplitWarning;card.append(note)}
+if(oversize.length){const warn=document.createElement('p');warn.style.color='#a33';warn.textContent='Let op: '+oversize.length+' staanders of overige delen passen niet in de gekozen handelslengte. Kies een langere handelslengte of ontwerp een constructief geschikte verbinding.';card.append(warn)}
 const drawTitle=document.createElement('h3');drawTitle.textContent='Constructietekening (schematisch)';drawTitle.style.marginTop='24px';card.append(drawTitle);
 const ns='http://www.w3.org/2000/svg',svg=document.createElementNS(ns,'svg');svg.setAttribute('viewBox','0 0 340 230');svg.style.cssText='width:100%;max-height:280px;background:#f5f7f4;border-radius:12px';
 const rect=(x,y,w,h,color)=>{const r=document.createElementNS(ns,'rect');for(const [k,v] of Object.entries({x,y,width:w,height:h,fill:color}))r.setAttribute(k,v);svg.append(r)};
