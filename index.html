@@ -67,34 +67,39 @@
 
   <section id="wand-calculator" class="panel">
     <div class="section-head"><div><p class="eyebrow">VOORZETWANDEN</p><h2>Calculator</h2></div><span class="pill">Testversie</span></div>
-    <div class="card form-grid" id="wall-form">
+    <div class="card" id="wall-form">
+      <div class="wall-input-section form-grid"><h3 class="wall-section-title">Wandafmetingen</h3>
       <label>Breedte wand (mm)<input id="w-width" type="number" min="1" value="4000"></label>
       <label>Hoogte wand (mm)<input id="w-height" type="number" min="1" value="2600"></label>
-      <div class="full wall-group-heading">Constructiemateriaal</div>
+      </div><div class="wall-input-section form-grid"><h3 class="wall-section-title">Constructie</h3>
       <label class="full">Constructiemethode<select id="w-method"><option value="between">Doorlopende boven- en onderregel (standaard)</option><option value="continuous">Doorlopende staanders, regels ertussen</option></select></label>
         <label>Constructie<select id="w-type"><option value="wood">Houten regelwerk</option><option value="metal">Metal stud</option></select></label>
       <label>Profiel / houtmaat<select id="w-profile"></select></label>
       <label>Hart-op-hart (mm)<select id="w-spacing"><option>300</option><option>400</option><option selected>600</option></select></label>
       <label>Handelslengte regels / profielen (mm)<input id="w-stock" type="number" min="1" value="3000"></label>
+</div><div class="wall-input-section form-grid"><h3 class="wall-section-title">Isolatie</h3>
       <label>Isolatie<select id="w-insulation"><option value="none">Geen</option><option value="glaswol">Glaswol</option><option value="steenwol">Steenwol</option><option value="vlas">Vlas</option><option value="eps">EPS / piepschuim</option><option value="pir">PIR-platen</option></select></label>
       <label>Isolatiedikte (mm)<input id="w-ins-thickness" type="number" min="1" value="70"></label>
-      <div class="full wall-group-heading">OSB-wandbekleding</div>
+      </div><div class="wall-input-section form-grid"><h3 class="wall-section-title">OSB-wandbekleding</h3>
       <label>OSB<select id="w-osb"><option value="vertical">Verticaal</option><option value="horizontal">Horizontaal</option><option value="none">Geen OSB</option></select></label>
       <label>OSB-plaat lengte (mm)<input id="w-osb-length" type="number" min="1" value="2440"></label>
       <label>OSB-plaat breedte (mm)<input id="w-osb-width" type="number" min="1" value="1220"></label>
-      <div class="full wall-group-heading">Gipswandbekleding</div>
+      <label>OSB eerste plaatdeel breedte (mm, 0 = automatisch)<input id="w-osb-start" type="number" min="0" step="1" value="0"></label>
+      </div><div class="wall-input-section form-grid"><h3 class="wall-section-title">Gipswandbekleding</h3>
       <label>Gipsplaten<select id="w-gypsum"><option value="yes">Ja</option><option value="no">Nee</option></select></label>
       <label>Gipsplaatrichting<select id="w-gyp-direction"><option value="vertical">Verticaal</option><option value="horizontal">Horizontaal</option></select></label>
       <label>Gipsplaat lengte (mm)<input id="w-gyp-length" type="number" min="1" value="2600"></label>
       <label>Gipsplaat breedte (mm)<input id="w-gyp-width" type="number" min="1" value="1200"></label>
-      <label>OSB eerste plaatdeel breedte (mm, 0 = automatisch)<input id="w-osb-start" type="number" min="0" step="1" value="0"></label>
       <label>Gips eerste plaatdeel breedte (mm, 0 = automatisch)<input id="w-gyp-start" type="number" min="0" step="1" value="0"></label>
-      <div class="full wall-group-heading">Plaatindeling en materiaalreserve</div>
+
+
+      </div><div class="wall-input-section form-grid"><h3 class="wall-section-title">Plaatindeling en materiaalreserve</h3>
       <label>Zaagbladverlies OSB (mm)<input id="w-osb-kerf" type="number" min="0" max="15" step="0.5" value="3"></label>
       <label>Minimale reststukzijde (mm)<input id="w-min-offcut" type="number" min="0" max="2000" value="150"></label>
       <label>Plaatnaden verspringen<select id="w-stagger"><option value="none">Nee, rechte banen</option><option value="half">Ja, om en om halve plaat</option></select></label>
       <label>Extra materiaaltoeslag (%)<input id="w-waste" type="number" min="0" max="100" value="10"></label>
-      <button class="button primary full" id="w-calculate" type="button">Bereken voorzetwand</button>
+</div>
+      <button class="button primary wall-calc-button" id="w-calculate" type="button">Bereken voorzetwand</button>
     </div>
     <div id="w-electrical-editor" class="stack"></div>
     <div id="w-results" class="stack" aria-live="polite"></div>
@@ -184,6 +189,6 @@ Legplank,564,540,4</textarea>
 <footer><span>KlusMaat · Testversie 0.1</span><span>Gemaakt om verder uit te bouwen</span></footer>
 <div id="toast" role="status" aria-live="polite"></div>
 <script src="app.js?v=100"></script>
-<script src="wall.js?v=104"></script>
+<script src="wall.js?v=105"></script>
 </body>
 </html>

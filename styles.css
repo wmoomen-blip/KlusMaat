@@ -5,3 +5,11 @@
 
 /* Duidelijke scheiding van materiaalkeuzes in de voorzetwandcalculator */
 .wall-group-heading{grid-column:1/-1;font-weight:750;font-size:1rem;color:#1f4938;border-bottom:2px solid #a9c9b4;padding:18px 0 7px;margin-top:5px;}
+
+#wall-form .wall-input-section{padding:14px 0 18px;border-bottom:1px solid #dfe6e0;margin-bottom:10px}
+#wall-form .wall-input-section:first-child{padding-top:0}
+#wall-form .wall-input-section:last-of-type{border-bottom:0}
+#wall-form .wall-section-title{grid-column:1/-1;margin:0 0 4px;color:#1f4938;font-size:16px;border-left:4px solid #91bba0;padding:6px 10px;background:#f4f8f4;border-radius:4px}
+#wall-form .wall-calc-button{width:100%;margin-top:8px}
+.wall-download{margin:10px 0 14px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.wall-download .muted{margin:0}

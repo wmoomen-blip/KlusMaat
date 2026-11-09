@@ -56,6 +56,41 @@ function plateLayout(wallW,wallH,plateL,plateW,direction,kerf,minOffcut,stagger,
  }
  return {pieces,sheets,offcuts,pw,ph,reused,kerf,stagger};
 }
+
+// Exporteer de actuele SVG-tekening als scherpe PNG, ook op Android Chrome.
+function addDrawingDownload(parent,svg,name){
+ const bar=document.createElement('div');bar.className='wall-download';
+ const btn=document.createElement('button');btn.type='button';btn.className='button small outline';btn.textContent='⬇ Download tekening (PNG)';
+ const status=document.createElement('span');status.className='muted';
+ btn.addEventListener('click',async()=>{
+  btn.disabled=true;status.textContent='Afbeelding maken…';
+  let url='';
+  try{
+   const clone=svg.cloneNode(true);
+   clone.setAttribute('xmlns','http://www.w3.org/2000/svg');
+   const vb=svg.viewBox.baseVal;
+   const w=Math.max(1,vb.width||340),h=Math.max(1,vb.height||230);
+   clone.setAttribute('width',String(w));clone.setAttribute('height',String(h));
+   const xml=new XMLSerializer().serializeToString(clone);
+   const blob=new Blob([xml],{type:'image/svg+xml;charset=utf-8'});
+   url=URL.createObjectURL(blob);
+   const img=new Image();
+   await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=()=>reject(new Error('SVG niet geladen'));img.src=url});
+   const scale=Math.min(4,Math.max(2,2200/w));
+   const canvas=document.createElement('canvas');canvas.width=Math.ceil(w*scale);canvas.height=Math.ceil(h*scale);
+   const ctx=canvas.getContext('2d');if(!ctx)throw new Error('Canvas niet beschikbaar');
+   ctx.fillStyle='#ffffff';ctx.fillRect(0,0,canvas.width,canvas.height);
+   ctx.drawImage(img,0,0,canvas.width,canvas.height);
+   const png=await new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(new Error('PNG kon niet worden gemaakt')),'image/png'));
+   const link=document.createElement('a');link.href=URL.createObjectURL(png);link.download='KlusMaat-'+name+'.png';
+   document.body.append(link);link.click();link.remove();
+   setTimeout(()=>URL.revokeObjectURL(link.href),30000);
+   status.textContent='Download gestart';
+  }catch(err){status.textContent='Download mislukt: '+err.message}
+  finally{if(url)URL.revokeObjectURL(url);btn.disabled=false}
+ });
+ bar.append(btn,status);parent.append(bar);
+}
 function plateSection(parent,label,layout,action,onEdit){
  const heading=document.createElement('h3');heading.textContent=label+' – plaatindeling';heading.style.marginTop='24px';parent.append(heading);
  if(layout.error){const p=document.createElement('p');p.textContent=layout.error;parent.append(p);return}
@@ -84,7 +119,7 @@ function plateSection(parent,label,layout,action,onEdit){
   });
   const bottom=make('text',{x:margin+drawW/2,y:margin+drawH+17,'text-anchor':'middle','font-size':12,fill:'#475569'});bottom.textContent=wallW+' mm';svg.append(bottom);
   const side=make('text',{x:12,y:margin+drawH/2,'text-anchor':'middle','font-size':11,fill:'#475569',transform:`rotate(-90 12 ${margin+drawH/2})`});side.textContent=wallH+' mm';svg.append(side);
-  box.append(svg,selection);parent.append(box);
+  box.append(svg,selection);addDrawingDownload(box,svg,label.toLowerCase()+'-plaatindeling');parent.append(box);
  }
 
  // Naad per baan aanpassen. Deze besturing staat buiten de SVG, zodat tikken op
@@ -215,7 +250,7 @@ let moving=-1,moved=false;
 function svgCoord(ev){const box=svg.getBoundingClientRect();const vb=svg.viewBox.baseVal;return{x:(ev.clientX-box.left)*vb.width/box.width,y:(ev.clientY-box.top)*vb.height/box.height}}
 function renderPoints(){svg.querySelectorAll('.w-electric-point').forEach(e=>e.remove());const clashes=[];points.forEach((p,i)=>{const {x,y}=pointCoords(p);const collision=allPositions.some(pos=>Math.abs(pos-p.x)<=Math.max(35,cross/2+25));if(collision)clashes.push(i+1);const g=makeSVG('g',{class:'w-electric-point','data-index':i,style:'cursor:grab;touch-action:none'});g.append(makeSVG('circle',{cx:x,cy:y,r:7,fill:collision?'#f97316':'#2563eb',stroke:'#fff','stroke-width':2}));const txt=makeSVG('text',{x,y:y+3,'text-anchor':'middle','font-size':9,'font-weight':'bold',fill:'#fff'});txt.textContent=i+1;g.append(txt);g.addEventListener('pointerdown',ev=>{ev.stopPropagation();moving=i;moved=false;g.setPointerCapture(ev.pointerId)});g.addEventListener('pointermove',ev=>{if(moving!==i)return;const pt=svgCoord(ev);p.x=Math.round(Math.max(0,Math.min(width,(pt.x-X)*width/W))/5)*5;p.y=Math.round(Math.max(0,Math.min(height,(Y+H-pt.y)*height/H))/5)*5;moved=true;g.querySelector("circle").setAttribute("cx",pointCoords(p).x);g.querySelector("circle").setAttribute("cy",pointCoords(p).y);g.querySelector("text").setAttribute("x",pointCoords(p).x);g.querySelector("text").setAttribute("y",pointCoords(p).y+3)});g.addEventListener('pointerup',()=>{if(moving===i){moving=-1;savePoints();refreshList();renderPoints()}});svg.append(g)});warning.textContent=clashes.length?'Let op: stroompunt(en) '+clashes.join(', ')+' overlappen mogelijk een staander (oranje). Controleer ook leidingen en elektradozen.':'Blauw = stroompunt · bruin = regelwerk. Tik op de tekening om een punt toe te voegen.'}
 svg.style.touchAction='none';svg.addEventListener('click',ev=>{if(ev.target.closest('.w-electric-point'))return;const pt=svgCoord(ev);if(pt.x<X||pt.x>X+W||pt.y<Y||pt.y>Y+H)return;points.push({x:Math.round((pt.x-X)*width/W/5)*5,y:Math.round((Y+H-pt.y)*height/H/5)*5,type:$('w-point-type').value});savePoints();calculate()});
-const t=document.createElementNS(ns,'text');t.setAttribute('x','170');t.setAttribute('y','223');t.setAttribute('text-anchor','middle');t.setAttribute('font-size','11');t.textContent=width+' mm × '+height+' mm · h.o.h. '+spacing+' mm';svg.append(t);card.append(svg);card.append(warning);renderPoints();refreshList();
+const t=document.createElementNS(ns,'text');t.setAttribute('x','170');t.setAttribute('y','223');t.setAttribute('text-anchor','middle');t.setAttribute('font-size','11');t.textContent=width+' mm × '+height+' mm · h.o.h. '+spacing+' mm';svg.append(t);card.append(svg);card.append(warning);renderPoints();refreshList();addDrawingDownload(card,svg,'constructie');
 const note=document.createElement('p');note.className='muted';note.textContent='Er worden geen extra staanders of dwarsregels voor plaatnaden toegevoegd. OSB kan gezaagd en gips kan gesneden worden; een praktische plaatindeling met reststukhergebruik wordt getoond; controleer snijverlies, voegverspringing en plaatranden. Controleer plaatranden, bevestiging, aansluitingen en verankering. Staanderhart 2 ligt op de ingestelde h.o.h.-maat gemeten vanaf de buitenzijde links; de eerste en laatste staander sluiten aan op de wanduiteinden. De houtzaagindeling houdt nog geen rekening met zaagbladverlies; bij metal stud kunnen CW-staanders een montagekorting vereisen.';card.append(note);if(plateDrawings.childElementCount){const plateHeading=document.createElement('h3');plateHeading.textContent='Plaatindeling – OSB en gips';plateHeading.style.marginTop='24px';card.append(plateHeading,plateDrawings)}el.replaceChildren(card);
 try{localStorage.setItem('klusmaat-wall-draft',JSON.stringify(Object.fromEntries([...document.querySelectorAll('#wall-form input,#wall-form select')].map(x=>[x.id,x.value]))))}catch{}
 }
