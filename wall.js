@@ -57,6 +57,22 @@ function plateLayout(wallW,wallH,plateL,plateW,direction,kerf,minOffcut,stagger,
  return {pieces,sheets,offcuts,pw,ph,reused,kerf,stagger};
 }
 
+// Bouw een afdrukbare werkmap. Op Android: Afdrukken > Opslaan als PDF.
+function openWorkPdf({width,height,spacing,profileName,constructionSvg,constructionCuts,osbLayout,gypLayout,orderLines}){
+ const win=window.open('','_blank');
+ if(!win){alert('Sta pop-ups toe om de PDF-werkmap te openen.');return}
+ const esc=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ const svgText=svg=>{if(!svg)return '';const clone=svg.cloneNode(true);clone.setAttribute('xmlns','http://www.w3.org/2000/svg');clone.setAttribute('width','900');clone.removeAttribute('style');return new XMLSerializer().serializeToString(clone)};
+ const section=(title,svg,lines)=>'<section class="sheet"><h2>'+esc(title)+'</h2>'+(svg?'<div class="drawing">'+svgText(svg)+'</div>':'')+'<div class="items">'+lines.map(x=>'<div>'+esc(x)+'</div>').join('')+'</div></section>';
+ const plate=(label,layout)=>{
+  if(!layout||layout.error)return '';
+  const svg=[...document.querySelectorAll('#w-results svg')].find(e=>e.getAttribute('aria-label')===label+' plaatindeling');
+  return section(label+' – plaatindeling',svg,[`Wand: ${width} × ${height} mm`,`Hele plaat: ${layout.pw} × ${layout.ph} mm`,`Benodigd: ${layout.sheets.length} hele platen`,...layout.pieces.map((x,i)=>`Plaat ${i+1}: ${x.w} × ${x.h} mm · links ${x.x} mm · vanaf vloer ${x.y} mm`)]);
+ };
+ const html='<!doctype html><html lang="nl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>KlusMaat – werkmap</title><style>body{font:14px Arial,sans-serif;color:#1e3026;margin:0;padding:22px}header{display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #32664c;padding-bottom:12px}.actions{padding:16px 0}button{background:#276749;color:white;border:0;padding:12px 18px;border-radius:8px;font-size:16px}.sheet{break-before:page;page-break-before:always;padding-top:14px}.sheet:first-of-type{break-before:auto;page-break-before:auto}h1{font-size:23px}h2{font-size:19px;margin-bottom:14px}.drawing svg{width:100%;height:auto;max-height:420px}.items{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 20px;margin-top:18px}.items div{padding:5px 0;border-bottom:1px solid #e1e7e2;break-inside:avoid;overflow-wrap:anywhere}.intro{margin:12px 0;color:#53675a}@page{size:A4 portrait;margin:13mm}@media print{body{padding:0}.actions{display:none}.sheet{padding-top:0}.drawing svg{max-height:115mm}header{margin-bottom:14px}.items{font-size:10px;gap:3px 12px}h2{font-size:16px}}</style></head><body><header><h1>KlusMaat – werktekeningen</h1><span>'+new Date().toLocaleDateString('nl-NL')+'</span></header><div class="actions"><button onclick="window.print()">Afdrukken / opslaan als PDF</button></div><p class="intro">Wand '+esc(width)+' × '+esc(height)+' mm · '+esc(profileName)+' · h.o.h. '+esc(spacing)+' mm</p>'+section('1. Constructietekening en zaaglijst',constructionSvg,[`Wand: ${width} × ${height} mm`,`Staanderafstand: h.o.h. ${spacing} mm`,...constructionCuts])+plate('OSB',osbLayout)+plate('Gips',gypLayout)+section('Bestellijst',null,orderLines)+'</body></html>';
+ win.document.open();win.document.write(html);win.document.close();win.focus();
+}
+
 // Exporteer de actuele SVG-tekening als scherpe PNG, ook op Android Chrome.
 function addDrawingDownload(parent,svg,name,details=[]){
  const bar=document.createElement('div');bar.className='wall-download';
@@ -264,6 +280,7 @@ if(gypLayout&&!gypLayout.error)addOrder('Gips',Math.ceil(gypLayout.sheets.length
 if(ins!=='none')addOrder('Isolatie '+ins,Math.ceil(area*reserveFactor*100)/100,'m²',num('w-ins-thickness')+' mm dik');
 const orderNote=document.createElement('p');orderNote.className='muted';orderNote.textContent='Platen en isolatie zijn inclusief de ingestelde '+waste+'% reserve, afgerond naar hele platen. Regels zijn gebaseerd op de bestaande zaagindeling zonder extra reserve; bevestigingsmiddelen en profielen zijn nog niet meegenomen. Controleer de aantallen voor bestelling.';card.append(orderNote);
 const copyOrder=document.createElement('button');copyOrder.type='button';copyOrder.className='button small';copyOrder.textContent='Bestellijst kopiëren';copyOrder.addEventListener('click',async()=>{const content=orderLines.join('\n');try{await navigator.clipboard.writeText(content);copyOrder.textContent='Gekopieerd';}catch{const field=document.createElement('textarea');field.value=content;field.style.cssText='width:100%;height:150px';card.insertBefore(field,copyOrder.nextSibling);field.select();copyOrder.textContent='Selecteer en kopieer de tekst';}});card.append(copyOrder);
+const pdfBtn=document.createElement('button');pdfBtn.type='button';pdfBtn.className='button primary';pdfBtn.textContent='📄 Complete werkmap (PDF)';pdfBtn.style.marginTop='12px';pdfBtn.addEventListener('click',()=>{const drawing=card.querySelector('svg');openWorkPdf({width,height,spacing,profileName:profile.value,constructionSvg:drawing,constructionCuts:Object.entries(grouped).sort((a,b)=>Number(b[0])-Number(a[0])).map(([length,count])=>`${count} stuks × ${length} mm`),osbLayout,gypLayout,orderLines})});card.append(pdfBtn);
 const cutTitle=document.createElement('h3');cutTitle.textContent='Zaaglijst';cutTitle.style.marginTop='24px';card.append(cutTitle);Object.entries(grouped).sort((a,b)=>Number(b[0])-Number(a[0])).forEach(([length,count])=>line(card,count+' stuks',length+' mm'));
 if(between&&railCuts.length>1&&!railSplitWarning){const note=document.createElement('p');note.className='muted';note.textContent='De boven- en onderregel zijn opgedeeld in handelslengtes, met naden ter plaatse van staanders. Verbind de naden constructief correct; niet elke aansluiting is zonder meer geschikt als dragende verbinding.';card.append(note)}
 if(railSplitWarning){const note=document.createElement('p');note.style.color='#a33';note.textContent=railSplitWarning;card.append(note)}
