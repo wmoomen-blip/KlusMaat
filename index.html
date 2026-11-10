@@ -71,6 +71,13 @@
       <div class="wall-input-section form-grid"><h3 class="wall-section-title">Wandafmetingen</h3>
       <label>Breedte wand (mm)<input id="w-width" type="number" min="1" value="4000"></label>
       <label>Hoogte wand (mm)<input id="w-height" type="number" min="1" value="2600"></label>
+      </div><div class="wall-input-section form-grid"><h3 class="wall-section-title">Deur of raam (eerste test)</h3>
+      <label class="full">Opening<select id="w-opening-type"><option value="none">Geen opening</option><option value="door">Deur</option><option value="window">Raam</option></select></label>
+      <label>Breedte opening (mm)<input id="w-opening-width" type="number" min="1" value="900"></label>
+      <label>Hoogte opening (mm)<input id="w-opening-height" type="number" min="1" value="2100"></label>
+      <label>Afstand vanaf links (mm)<input id="w-opening-x" type="number" min="0" value="600"></label>
+      <label>Onderkant vanaf vloer (mm)<input id="w-opening-y" type="number" min="0" value="0"></label>
+      <p class="muted full">Eerste versie: één opening zichtbaar in de constructietekening. Constructieve lateien, extra staanders en plaatuitsparingen worden nog niet automatisch berekend.</p>
       </div><div class="wall-input-section form-grid"><h3 class="wall-section-title">Constructie</h3>
       <label class="full">Constructiemethode<select id="w-method"><option value="between">Doorlopende boven- en onderregel (standaard)</option><option value="continuous">Doorlopende staanders, regels ertussen</option></select></label>
         <label>Constructie<select id="w-type"><option value="wood">Houten regelwerk</option><option value="metal">Metal stud</option></select></label>
@@ -103,7 +110,7 @@
     </div>
     <div id="w-electrical-editor" class="stack"></div>
     <div id="w-results" class="stack" aria-live="polite"></div>
-    <div class="notice"><b>Let op</b><p>Dit is een indicatieve berekening voor één rechte wand zonder deuren of ramen. Plaataantallen zijn op oppervlakte gebaseerd, niet op een geoptimaliseerde plaatindeling. Extra ondersteuning bij plaatnaden, bevestigingsmiddelen en bouwfysische eisen moeten nog worden uitgewerkt.</p></div>
+    <div class="notice"><b>Let op</b><p>Dit is een indicatieve berekening voor één rechte wand. Deur- en raamopeningen worden voorlopig alleen getekend; zaaglijsten en bestellijsten rekenen nog met de volledige wand. Plaataantallen zijn op oppervlakte gebaseerd, niet op een geoptimaliseerde plaatindeling. Extra ondersteuning bij plaatnaden, bevestigingsmiddelen en bouwfysische eisen moeten nog worden uitgewerkt.</p></div>
     <button class="button outline" data-go="voorzetwanden">Terug naar Voorzetwanden</button>
   </section>
   <section id="wand-ontwerp" class="panel"><div class="section-head"><div><p class="eyebrow">VOORZETWANDEN</p><h2>Ontwerp / plattegrond</h2></div></div><div class="card"><p>Gepland: meerdere ruimtes en wanden, automatisch tekenen of zelf tekenen, deuren, ramen en constructietekeningen.</p><button class="button outline" data-go="voorzetwanden">Terug naar Voorzetwanden</button></div></section>
@@ -189,6 +196,6 @@ Legplank,564,540,4</textarea>
 <footer><span>KlusMaat · Testversie 0.1</span><span>Gemaakt om verder uit te bouwen</span></footer>
 <div id="toast" role="status" aria-live="polite"></div>
 <script src="app.js?v=100"></script>
-<script src="wall.js?v=110"></script>
+<script src="wall.js?v=111"></script>
 </body>
 </html>
