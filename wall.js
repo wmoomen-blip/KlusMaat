@@ -237,7 +237,17 @@ function editSeam(material,row,index,value){
  seamPanelOpen[material]=true;
  calculate();
 }
-$('w-calculate').addEventListener('click',calculate);
+const calcButton=$('w-calculate');
+const calcStatus=document.createElement('p');calcStatus.id='w-calc-status';calcStatus.setAttribute('role','status');calcStatus.style.cssText='margin:10px 0;font-weight:600;color:#9a4a12';calcButton.insertAdjacentElement('afterend',calcStatus);
+calcButton.addEventListener('click',()=>{
+ calcStatus.textContent='Berekening wordt uitgevoerd…';
+ try{calculate();
+   const result=$('w-results');
+   if(result.querySelector('.card'))calcStatus.textContent='Berekening gereed. Het overzicht staat hieronder.';
+   else calcStatus.textContent='Controleer de invoer: '+(result.textContent||'onbekende invoerfout');
+   result.scrollIntoView({behavior:'smooth',block:'start'});
+ }catch(error){console.error('KlusMaat berekenfout',error);calcStatus.textContent='Berekening mislukt: '+error.message+'. Maak eventueel een schermafbeelding van deze melding.';}
+});
 function calculate(){
 const width=num('w-width'),height=num('w-height'),spacing=num('w-spacing'),stock=num('w-stock'),waste=num('w-waste');
 const values=[width,height,spacing,stock,num('w-osb-length'),num('w-osb-width'),num('w-gyp-length'),num('w-gyp-width')];
